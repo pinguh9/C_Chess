@@ -1,92 +1,275 @@
 #include <stdio.h>
 #include <stdlib.h>
 #define _CRT_SECURE_NO_WARNINGS
-enum name { PAWN, KNIGHT, BISHOP, ROOK, QUEEN, KING };
-_Bool turn = 0;//0ÀÌ¸é ¹é»ö 1ÀÌ¸é Èæ»öÀÇ ÅÏ
+enum name { PAWN, KNIGHT, BISHOP, ROOK, QUEEN, KING, NONE };
+int turn = 0;
 
 typedef struct piece
 {
-	_Bool isempty;//¸»ÀÌ ÀÖÀ¸¸é 0 ¾øÀ¸¸é 1.
+	_Bool isempty;//ë§ì´ ìˆìœ¼ë©´ 0, ì—†ìœ¼ë©´ 1.
 	enum name n;
-	_Bool color;//1ÀÌ¸é Èæ 0ÀÌ¸é ¹é
-	int count;//ÀÌµ¿ÇÑ È½¼ö
-	_Bool alive;//1ÀÌ¸é »ıÁ¸ 0ÀÌ¸é »ç¸Á
+	int color;//ë°±ì´ë©´ 0, í‘ì´ë©´ 1, ì—†ìœ¼ë©´ 2
+	int count;//ì´ë™í•œ íšŸìˆ˜
+	_Bool alive;//ì‚¬ë§ì´ë©´ 0, ìƒì¡´ì´ë©´ 1
+	_Bool isMove;//ê°ˆ ìˆ˜ ìˆìœ¼ë©´ 1, ì—†ìœ¼ë©´ 0
 }Piece;
 
-void  Initialize_map(Piece* (*p)[8]) {//¸Ê ÃÊ±âÈ­
+void initialize_Move(Piece* (*p)[8], int x, int y) // ì¥ì• ë¬¼ì„ í™•ì¸í•˜ê³  ê°ˆ ìˆ˜ ìˆìœ¼ë©´ isMoveë¥¼ 1ë¡œ, ê°ˆ ìˆ˜ ì—†ìœ¼ë©´ 0ìœ¼ë¡œ ë°”ê¾¼ë‹¤.
+{
+	int i, j, blockDR_X = 7, blockDR_Y = 7, blockUL_X = 0, blockUL_Y = 0, blockDL_X = 7, blockDL_Y = 7, blockUR_X = 0, blockUR_Y = 7, blockD = 7, blockU = 0, blockR = 7, blockL = 0;
 
-	for (int i = 0; i < 8; i++) {//Æù ÃÊ±âÈ­
-		  //Èæ»ö Æù ÃÊ±âÈ­
+	if (x == -1 && y == -1)
+		return;
+
+	else
+	{
+		switch (p[x][y]->n) // â˜…â˜†â˜…â˜† x-1, y-1ë¡œ ìˆ˜ì •í•´ì•¼ í• ìˆ˜ë„
+		{
+		case 0:   // PAWN
+			break;
+		case 1:   // KNIGHT
+			break;
+		case 2:   // BISHOP
+			for (i = x + 1, j = y + 1; i <= 7 && j <= 7; i++, j++)   //ì•„ë˜ ì˜¤ë¥¸ìª½ ì¥ì• ë¬¼
+				if (p[i][j]->isempty == 0) {
+					blockDR_X = i;
+					blockDR_Y = j;
+					break;
+				}
+			for (i = x - 1, j = y - 1; i >= 0 && j >= 0; i--, j--)   //ìœ„ ì™¼ìª½ ì¥ì• ë¬¼
+				if (p[i][j]->isempty == 0) {
+					blockUL_X = i;
+					blockUL_Y = j;
+					break;
+				}
+			for (i = x + 1, j = y - 1; i <= 7 && j >= 0; i++, j--)   //ì•„ë˜ ì™¼ìª½ ì¥ì• ë¬¼
+				if (p[i][j]->isempty == 0) {
+					blockDL_X = i;
+					blockDL_Y = j;
+					break;
+				}
+			for (i = x - 1, j = y + 1; i >= 0 && j <= 7; i--, j++)   //ìœ„ ì˜¤ë¥¸ìª½ ì¥ì• ë¬¼
+				if (p[i][j]->isempty == 0) {
+					blockUR_X = i;
+					blockUR_Y = j;
+					break;
+				}
+
+			for (i = 0; i < 8; i++)
+			{
+				for (j = 0; j < 8; j++)
+				{
+					if (i < blockUL_X && j < blockUL_Y)   // ìœ„ ì™¼ìª½ ì¥ì• ë¬¼
+						p[i][j]->isMove = 0;
+					else if (i<blockUR_X && j>blockUR_Y)   // ìœ„ ì˜¤ë¥¸ìª½ ì¥ì• ë¬¼
+						p[i][j]->isMove = 0;
+					else if (i > blockDL_X&& j < blockDL_Y)           // ì•„ë˜ ì™¼ìª½ ì¥ì• ë¬¼
+						p[i][j]->isMove = 0;
+					else if (i > blockDR_X&& j > blockUR_Y)           // ì•„ë˜ ì˜¤ë¥¸ìª½ ì¥ì• ë¬¼
+						p[i][j]->isMove = 0;
+					else
+						p[i][j]->isMove = 1;
+				}
+			}
+
+			break;
+		case 3:   // ROOK
+			for (i = x + 1; i <= 7; i++)   // ì•„ë˜ìª½ ì¥ì• ë¬¼
+				if (p[i][y]->isempty == 0) {
+					blockD = i;
+					break;
+				}
+			for (i = x - 1; i >= 0; i--)   // ìœ„ìª½ ì¥ì• ë¬¼
+				if (p[i][y]->isempty == 0) {
+					blockU = i;
+					break;
+				}
+			for (i = y + 1; i <= 7; i++)   // ì˜¤ë¥¸ìª½ ì¥ì• ë¬¼
+				if (p[x][i]->isempty == 0) {
+					blockR = i;
+					break;
+				}
+			for (i = y - 1; i >= 0; i--)   // ì™¼ìª½ ì¥ì• ë¬¼
+				if (p[x][i]->isempty == 0) {
+					blockL = i;
+					break;
+				}
+
+			for (i = 0; i < 8; i++)
+			{
+				for (j = 0; j < 8; j++)
+				{
+					if (j == y && ((i < blockU) || (i > blockD)))   // ìœ„ì™€ ì•„ë˜ ì¥ì• ë¬¼ì´ ìˆì„ ë•Œ
+						p[i][j]->isMove = 0;
+					else if (i == x && ((j < blockL) || (j > blockR)))   // ì™¼ìª½ê³¼ ì˜¤ë¥¸ìª½ ì¥ì• ë¬¼ì´ ìˆì„ ë•Œ
+						p[i][j]->isMove = 0;
+					else
+						p[i][j]->isMove = 1;
+				}
+			}
+
+			break;
+		case 4:   // QUEEN
+			for (i = x + 1, j = y + 1; i <= 7 && j <= 7; i++, j++)   //ì•„ë˜ ì˜¤ë¥¸ìª½ ì¥ì• ë¬¼
+				if (p[i][j]->isempty == 0) {
+					blockDR_X = i;
+					blockDR_Y = j;
+					break;
+				}
+			for (i = x - 1, j = y - 1; i >= 0 && j >= 0; i--, j--)   //ìœ„ ì™¼ìª½ ì¥ì• ë¬¼
+				if (p[i][j]->isempty == 0) {
+					blockUL_X = i;
+					blockUL_Y = j;
+					break;
+				}
+			for (i = x + 1, j = y - 1; i <= 7 && j >= 0; i++, j--)   //ì•„ë˜ ì™¼ìª½ ì¥ì• ë¬¼
+				if (p[i][j]->isempty == 0) {
+					blockDL_X = i;
+					blockDL_Y = j;
+					break;
+				}
+			for (i = x - 1, j = y + 1; i >= 0 && j <= 7; i--, j++)   //ìœ„ ì˜¤ë¥¸ìª½ ì¥ì• ë¬¼
+				if (p[i][j]->isempty == 0) {
+					blockUR_X = i;
+					blockUR_Y = j;
+					break;
+				}
+
+			for (i = x + 1; i <= 7; i++)   // ì•„ë˜ìª½ ì¥ì• ë¬¼
+				if (p[i][y]->isempty == 0) {
+					blockD = i;
+					break;
+				}
+			for (i = x - 1; i >= 0; i--)   // ìœ„ìª½ ì¥ì• ë¬¼
+				if (p[i][y]->isempty == 0) {
+					blockU = i;
+					break;
+				}
+			for (i = y + 1; i <= 7; i++)   // ì˜¤ë¥¸ìª½ ì¥ì• ë¬¼
+				if (p[x][i]->isempty == 0) {
+					blockR = i;
+					break;
+				}
+			for (i = y - 1; i >= 0; i--)   // ì™¼ìª½ ì¥ì• ë¬¼
+				if (p[x][i]->isempty == 0) {
+					blockL = i;
+					break;
+				}
+
+			for (i = 0; i < 8; i++)
+			{
+				for (j = 0; j < 8; j++)
+				{
+					if (j == y && ((i < blockU) || (i > blockD)))           // ìœ„ì™€ ì•„ë˜ ì¥ì• ë¬¼ì´ ìˆì„ ë•Œ
+						p[i][j]->isMove = 0;
+					else if (i == x && ((j < blockL) || (j > blockR)))           // ì™¼ìª½ê³¼ ì˜¤ë¥¸ìª½ ì¥ì• ë¬¼ì´ ìˆì„ ë•Œ
+						p[i][j]->isMove = 0;
+					else if (i < blockUL_X && j < blockUL_Y)           // ìœ„ ì™¼ìª½ ì¥ì• ë¬¼
+						p[i][j]->isMove = 0;
+					else if (i<blockUR_X && j>blockUR_Y)           // ìœ„ ì˜¤ë¥¸ìª½ ì¥ì• ë¬¼
+						p[i][j]->isMove = 0;
+					else if (i > blockDL_X&& j < blockDL_Y)                   // ì•„ë˜ ì™¼ìª½ ì¥ì• ë¬¼
+						p[i][j]->isMove = 0;
+					else if (i > blockDR_X&& j > blockUR_Y)                   // ì•„ë˜ ì˜¤ë¥¸ìª½ ì¥ì• ë¬¼
+						p[i][j]->isMove = 0;
+					else
+						p[i][j]->isMove = 1;
+				}
+			}
+			break;
+		case 5:   // KING
+			break;
+		case 6:   // empty
+			break;
+		}
+	}
+}
+
+void  Initialize_map(Piece* (*p)[8]) {//ë§µ ì´ˆê¸°í™”
+
+	for (int i = 0; i < 8; i++) {//í° ì´ˆê¸°í™”
+			//í‘ìƒ‰ í° ì´ˆê¸°í™”
 		p[1][i]->n = PAWN;
 		p[1][i]->isempty = 0;
 		p[1][i]->color = 1;
 		p[1][i]->count = 0;
 		p[1][i]->alive = 1;
 
-		//¹é»ö Æù ÃÊ±âÈ­
+		//ë°±ìƒ‰ í° ì´ˆê¸°í™”
 		p[6][i]->n = PAWN;
 		p[6][i]->isempty = 0;
 		p[6][i]->color = 0;
 		p[6][i]->count = 0;
 		p[6][i]->alive = 1;
 
-		//Èæ»ö Ã¹ÁÙ ÃÊ±âÈ­
+		//í‘ìƒ‰ ì²«ì¤„ ì´ˆê¸°í™”
 		p[0][i]->isempty = 0;
 		p[0][i]->color = 1;
 		p[0][i]->count = 0;
 		p[0][i]->alive = 1;
 
-		//¹é»ö µÎ¹øÂ°ÁÙ ÃÊ±âÈ­
+		//ë°±ìƒ‰ ë‘ë²ˆì§¸ì¤„ ì´ˆê¸°í™”
 		p[7][i]->isempty = 0;
 		p[7][i]->color = 0;
 		p[7][i]->count = 0;
-		p[7][i]->alive = 0;
+		p[7][i]->alive = 1;
 	}
+	//ë¹ˆ ê³µê°„ ì´ˆê¸°í™”
+	for (int i = 2; i < 6; i++)
+		for (int j = 0; j < 8; j++) {
+			p[i][j]->isempty = 1;
+			p[i][j]->color = 3;
+			p[i][j]->count = 0;
+			p[i][j]->alive = 0;
+			p[i][j]->n = NONE;
+		}
 
-	//·è ÃÊ±âÈ­
+	//ë£© ì´ˆê¸°í™”
 	p[0][0]->n = ROOK;
 	p[0][7]->n = ROOK;
 	p[7][0]->n = ROOK;
 	p[7][7]->n = ROOK;
-
+	//ë‚˜ì´íŠ¸ ì´ˆê¸°í™”
 	p[0][1]->n = KNIGHT;
 	p[0][6]->n = KNIGHT;
 	p[7][1]->n = KNIGHT;
 	p[7][6]->n = KNIGHT;
-
+	//ë¹„ìˆ ì´ˆê¸°í™”
 	p[0][2]->n = BISHOP;
 	p[0][5]->n = BISHOP;
 	p[7][2]->n = BISHOP;
 	p[7][5]->n = BISHOP;
-
+	//í€¸ ì´ˆê¸°í™”
 	p[0][3]->n = QUEEN;
 	p[7][3]->n = QUEEN;
-
+	//í‚¹ ì´ˆê¸°í™”
 	p[0][4]->n = KING;
 	p[7][4]->n = KING;
 }
 
 void print_map(Piece* (*p)[8], int x, int y) {
-	printf("¡¡¡¡a   b   c   d   e   f   g   h  \n");
+
+	initialize_Move(p, x, y);
+	printf("ã€€ã€€a   b   c   d   e   f   g   h  \n");
 	for (int i = 0; i < 8; i++) {
 		printf(" %d ", i + 1);
 		for (int j = 0; j < 8; j++) {
 			if (p[i][j]->isempty)
 			{
-				if (x == -1 && y == -1) // ±â¹°À» ¼±ÅÃÇÏÁö ¾Ê¾ÒÀ» ¶§
-					printf(" -- "); //ºóÀÚ¸®
+				if (x == -1 && y == -1) // ê¸°ë¬¼ì„ ì„ íƒí•˜ì§€ ì•Šì•˜ì„ ë•Œ
+					printf(" -- "); //ë¹ˆìë¦¬
 				else
 				{
 					switch (p[x][y]->n) {
-					case 0: // Æù
-						if (p[x][y]->color == 1) // ÈæÀÌ¸é
+					case 0: // í°
+						if (p[x][y]->color == 1) // í‘ì´ë©´
 						{
 							if ((i == (x + 1)) && j == y)
 								printf(" @@ ");
 							else if (i == (x + 2) && j == y)
 							{
 								if (p[x][y]->count == 0)
-									printf(" @@ "); // ÇÑ ¹øµµ ¾È ¿òÁ÷¿´À¸¸é 2Ä­ ¿òÁ÷ÀÏ ¼ö ÀÖÀ½
+									printf(" @@ "); // í•œ ë²ˆë„ ì•ˆ ì›€ì§ì˜€ìœ¼ë©´ 2ì¹¸ ì›€ì§ì¼ ìˆ˜ ìˆìŒ
 								else
 									printf(" -- ");
 							}
@@ -101,7 +284,7 @@ void print_map(Piece* (*p)[8], int x, int y) {
 							else if (i == (x - 2) && j == y)
 							{
 								if (p[x][y]->count == 0)
-									printf(" @@ "); // ÇÑ ¹øµµ ¾È ¿òÁ÷¿´À¸¸é 2Ä­ ¿òÁ÷ÀÏ ¼ö ÀÖÀ½
+									printf(" @@ "); // í•œ ë²ˆë„ ì•ˆ ì›€ì§ì˜€ìœ¼ë©´ 2ì¹¸ ì›€ì§ì¼ ìˆ˜ ìˆìŒ
 								else
 									printf(" -- ");
 							}
@@ -110,31 +293,31 @@ void print_map(Piece* (*p)[8], int x, int y) {
 							break;
 						}
 
-					case 1:         // ³ªÀÌÆ®
+					case 1: // ë‚˜ì´íŠ¸
 						if (((abs(x - i) == 2) && abs(y - j) == 1) || ((abs(x - i) == 1) && abs(y - j) == 2))
 							printf(" @@ ");
 						else
 							printf(" -- ");
 						break;
-					case 2: // ºñ¼ó
-						if (abs(x - i) == abs(y - j))
+					case 2: // ë¹„ìˆ
+						if ((abs(x - i) == abs(y - j)) && p[i][j]->isMove == 1)
 							printf(" @@ ");
 						else
 							printf(" -- ");
 						break;
-					case 3: // ·è
-						if ((x == i || y == j))
+					case 3: // ë£©
+						if ((x == i || y == j) && p[i][j]->isMove == 1)
 							printf(" @@ ");
 						else
 							printf(" -- ");
 						break;
-					case 4:         // Äı
-						if ((abs(x - i) == abs(y - j)) || x == i || y == j)
+					case 4: // í€¸
+						if (((abs(x - i) == abs(y - j)) || x == i || y == j) && p[i][j]->isMove == 1)
 							printf(" @@ ");
 						else
 							printf(" -- ");
 						break;
-					case 5:         // Å·
+					case 5: // í‚¹
 						if (abs(x - i) <= 1 && abs(y - j) <= 1)
 							printf(" @@ ");
 						else
@@ -145,48 +328,48 @@ void print_map(Piece* (*p)[8], int x, int y) {
 			}
 
 			else {
-				if (p[i][j]->color) {//Èæ»ö
+				if (p[i][j]->color) {//í‘ìƒ‰
 					switch (p[i][j]->n) {
 					case 0:
-						printf(" ¡Ü ");
+						printf(" â— ");
 						break;
 					case 1:
-						printf(" ¡ß ");
+						printf(" â—† ");
 						break;
 					case 2:
-						printf(" ¡ã ");
+						printf(" â–² ");
 						break;
 					case 3:
-						printf(" ¡á ");
+						printf(" â–  ");
 						break;
 					case 4:
-						printf(" ¡å ");
+						printf(" â–¼ ");
 						break;
 					case 5:
-						printf(" ¡Ú ");
+						printf(" â˜… ");
 						break;
 					}
 				}
 
-				else {//¹é»ö
+				else {//ë°±ìƒ‰
 					switch (p[i][j]->n) {
 					case 0:
-						printf(" ¡Û ");
+						printf(" â—‹ ");
 						break;
 					case 1:
-						printf(" ¡Ş ");
+						printf(" â—‡ ");
 						break;
 					case 2:
-						printf(" ¡â ");
+						printf(" â–³ ");
 						break;
 					case 3:
-						printf(" ¡à ");
+						printf(" â–¡ ");
 						break;
 					case 4:
-						printf(" ¡ä ");
+						printf(" â–½ ");
 						break;
 					case 5:
-						printf(" ¡Ù ");
+						printf(" â˜† ");
 						break;
 
 					}
@@ -198,17 +381,18 @@ void print_map(Piece* (*p)[8], int x, int y) {
 	}
 }
 
-void Pawnlomotion(Piece* (*p)[8], int x, int y)      //Æù ½Â±Ş
+//í° ìŠ¹ê¸‰ í•¨ìˆ˜
+void Pawnlomotion(Piece* (*p)[8], int x, int y)
 {
 	enum name nombre;
 
-	printf("Æù ½Â±Ş °¡´É! 1:³ªÀÌÆ® 2:ºñ¼ó 3:·è 4:Äı\n");
+	printf("í° ìŠ¹ê¸‰ ê°€ëŠ¥! 1:ë‚˜ì´íŠ¸ 2:ë¹„ìˆ 3:ë£© 4:í€¸\n");
 	while (1)
 	{
 		scanf("%d", &nombre);
 
 		if (nombre < 1 || nombre > 4)
-			printf("Àß¸øµÈ °ªÀ» ÀÔ·ÂÇß½À´Ï´Ù.\n");
+			printf("ì˜ëª»ëœ ê°’ì„ ì…ë ¥í–ˆìŠµë‹ˆë‹¤.\n");
 		else
 			break;
 	}
@@ -216,218 +400,470 @@ void Pawnlomotion(Piece* (*p)[8], int x, int y)      //Æù ½Â±Ş
 	p[x][y]->n = nombre;
 }
 
+//ì´ë™í•  ë•Œ ìƒíƒœ ë³€ê²½ í•¨ìˆ˜
+void statuemove(Piece* (*p)[8], int x, int y, int toX, int toY) {
+	p[toX - 1][toY - 1]->isempty = 0;
+	p[toX - 1][toY - 1]->n = p[x][y]->n;
+	p[toX - 1][toY - 1]->color = p[x][y]->color;
+	p[toX - 1][toY - 1]->alive = p[x][y]->alive;
+	p[toX - 1][toY - 1]->count = p[x][y]->count + 1;
+	p[x][y]->isempty = 1;
+	p[x][y]->n = NONE;
+	p[x][y]->color = 3;
+	p[x][y]->alive = 0;
+	p[x][y]->count = 0;
+	turn++;
+}
+
+//í° ì´ë™ í•¨ìˆ˜
 void pawn_move(Piece* (*p)[8], int x, int y) {
 	int toX, toY;
-	printf("ÀÌµ¿ÇÒ Ä­ ÁÂÇ¥:");
-	scanf("%d %d", &toX, &toY);
+	char tmp;
 
-	if (p[x][y]->color == 0) {         //¼±ÅÃÇÑ ÆùÀÌ ¹éÀÏ¶§
-		if ((x - (toX - 1)) <= 0) {      //µÚ·Î ÀÌµ¿ ºÒ°¡
-			printf("ÆùÀº µÚ·Î ÀÌµ¿ÇÒ ¼ö ¾ø½À´Ï´Ù.\n");
-			return;
-		}
-	}
-	else if (p[x][y]->color == 1) {      //¼±ÅÃÇÑ ÆùÀÌ ÈæÀÏ¶§
-		if ((x - (toX - 1)) >= 0) {      //µÚ·Î ÀÌµ¿ ºÒ°¡
-			printf("ÆùÀº µÚ·Î ÀÌµ¿ÇÒ ¼ö ¾ø½À´Ï´Ù.\n");
-			return;
-		}
-	}
+	printf("ì´ë™í•  ì¹¸ ì¢Œí‘œ:");
+	scanf(" %c %d", &tmp, &toX);
 
-	if (p[x][y]->color == p[toX - 1][toY - 1]->color) {      //°°Àº Æí ¸Ô±â ºÒ°¡
-		printf("°°Àº »öÀÇ À§Ä¡·Î ÀÌµ¿ÇÒ ¼ö ¾ø½À´Ï´Ù.\n");
+	toY = (int)(tmp - 'a' + 1);
+
+	if (p[x][y]->color == p[toX - 1][toY - 1]->color) { //ê°™ì€ í¸ ë¨¹ê¸° ë¶ˆê°€
+		printf("ë¶ˆê°€ëŠ¥í•œ ì´ë™ì…ë‹ˆë‹¤.\n");
 		return;
 	}
 
+	if (p[x][y]->color == 0) { //ì„ íƒí•œ ë§ì´ ë°±ì¼ë•Œ
+		if (p[toX - 1][toY - 1]->isempty == 1) { //ê°€ë ¤ëŠ” ê³³ì— ë§ì´ ì—†ì„ ë•Œ
+			if (p[x][y]->count == 0) //í°ì´ í•œë²ˆë„ ì•ˆ ì›€ì§ì˜€ì„ ë•Œ
+				if ((x - (toX - 1) == 2 && (y - (toY - 1)) == 0) || (x - (toX - 1) == 1 && (y - (toY - 1)) == 0)) { //ì„¸ë¡œë¡œ 2ì¹¸ê¹Œì§€ ì´ë™ ê°€ëŠ¥
+					statuemove(p, x, y, toX, toY);
+				}
+				else printf("ë¶ˆê°€ëŠ¥í•œ ì´ë™ì…ë‹ˆë‹¤.\n");
+			else { //í°ì´ 1ë²ˆ ì´ìƒ ì›€ì§ì˜€ì„ ë•Œ
+				if ((x - (toX - 1) == 1 && (y - (toY - 1)) == 0)) { //1ì¹¸ê¹Œì§€ ì´ë™ ê°€ëŠ¥
+					statuemove(p, x, y, toX, toY);
+				}
+				else printf("ë¶ˆê°€ëŠ¥í•œ ì´ë™ì…ë‹ˆë‹¤.\n");
+			}
+		}
+		else { //ê°€ë ¤ëŠ” ê³³ì— ìƒëŒ€ê°€ ìˆì„ ë•Œ
+			if ((x - (toX - 1)) == 1 && abs(y - (toY - 1)) == 1) { //ëŒ€ê°ì„ ìœ¼ë¡œ í•œ ì¹¸ì”©ë§Œ ì´ë™ ê°€ëŠ¥
+				statuemove(p, x, y, toX, toY);
+			}
+			else printf("ë¶ˆê°€ëŠ¥í•œ ì´ë™ì…ë‹ˆë‹¤.\n");
+		}
+	}
+	else { //ì„ íƒí•œ ë§ì´ í‘ì¼ë•Œ
+		if (p[toX - 1][toY - 1]->isempty == 1) { //ê°€ë ¤ëŠ” ê³³ì— ë§ì´ ì—†ì„ ë•Œ
+			if (p[x][y]->count == 0) //í°ì´ í•œë²ˆë„ ì•ˆ ì›€ì§ì˜€ì„ ë•Œ
+				if ((x - (toX - 1) == -2 && (y - (toY - 1)) == 0) || (x - (toX - 1) == -1 && (y - (toY - 1)) == 0)) { //ì„¸ë¡œë¡œ 2ì¹¸ê¹Œì§€ ì´ë™ ê°€ëŠ¥
+					statuemove(p, x, y, toX, toY);
+				}
+				else printf("ë¶ˆê°€ëŠ¥í•œ ì´ë™ì…ë‹ˆë‹¤.\n");
+			else { //í°ì´ 1ë²ˆ ì´ìƒ ì›€ì§ì˜€ì„ ë•Œ
+				if ((x - (toX - 1) == -1 && (y - (toY - 1)) == 0)) { //1ì¹¸ê¹Œì§€ ì´ë™ ê°€ëŠ¥
+					statuemove(p, x, y, toX, toY);
+				}
+				else printf("ë¶ˆê°€ëŠ¥í•œ ì´ë™ì…ë‹ˆë‹¤.\n");
+			}
+		}
+		else { // ê°€ë ¤ëŠ” ê³³ì— ìƒëŒ€ê°€ ìˆì„ ë•Œ
+			if ((x - (toX - 1)) == -1 && abs(y - (toY - 1)) == 1) { //ëŒ€ê°ì„ ìœ¼ë¡œ í•œ ì¹¸ì”©ë§Œ ì´ë™ ê°€ëŠ¥
+				statuemove(p, x, y, toX, toY);
+			}
+			else printf("ë¶ˆê°€ëŠ¥í•œ ì´ë™ì…ë‹ˆë‹¤.\n");
+		}
+	}
 
-	if (p[toX - 1][toY - 1]->isempty == 0) {      //°¡·Á´Â °÷¿¡ ¸»ÀÌ ÀÖÀ» ¶§ @¿©±â if¹® Àß¸øµÅ¼­ Æù ¸Ô±â¿¡¼­ ¹ö±× ¹ß»ıÇÏ´Âµí?
-		
-		if (p[x][y]->count == 0)      //ÆùÀÌ ÇÑ¹øµµ ¾È ¿òÁ÷¿´À» ¶§
-			if (abs(x - (toX - 1)) <= 2 && abs(y - (toY - 1)) == 0) {      //2Ä­±îÁö ÀÌµ¿ °¡´É
-				if (turn)turn = 0;
-				else turn = 1;
-				p[x][y]->isempty = 1;
-				p[toX - 1][toY - 1]->isempty = 0;
-				p[toX - 1][toY - 1]->n = p[x][y]->n;
-				p[toX - 1][toY - 1]->color = p[x][y]->color;
-				p[toX - 1][toY - 1]->alive = p[x][y]->alive;
-				p[toX - 1][toY - 1]->count = p[x][y]->count + 1;
-			}
-			else printf("ºÒ°¡´ÉÇÑ ÀÌµ¿ÀÔ´Ï´Ù.\n");
-		else {      //ÆùÀÌ 1¹ø ÀÌ»ó ¿òÁ÷¿´À» ¶§
-			if (abs(x - (toX - 1)) <= 1 && abs(y - (toY - 1)) == 0) {      //2Ä­±îÁö ÀÌµ¿ °¡´É
-				if (turn)turn = 0;
-				else turn = 1;
-				p[x][y]->isempty = 1;
-				p[toX - 1][toY - 1]->isempty = 0;
-				p[toX - 1][toY - 1]->n = p[x][y]->n;
-				p[toX - 1][toY - 1]->color = p[x][y]->color;
-				p[toX - 1][toY - 1]->alive = p[x][y]->alive;
-				p[toX - 1][toY - 1]->count = p[x][y]->count + 1;
-			}
-			else printf("ºÒ°¡´ÉÇÑ ÀÌµ¿ÀÔ´Ï´Ù.\n");
-		}
-	}
-	else { // °¡·Á´Â °÷¿¡ »ó´ë°¡ ÀÖÀ» ¶§
-		if (abs(x - (toX - 1)) == 1 && abs(y - (toY - 1)) == 1) {      //´ë°¢¼±À¸·Î ÇÑ Ä­¾¿¸¸ ÀÌµ¿ °¡´É
-			if (turn)turn = 0;
-			else turn = 1;
-			p[x][y]->isempty = 1;
-			p[toX - 1][toY - 1]->isempty = 0;
-			p[toX - 1][toY - 1]->n = p[x][y]->n;
-			p[toX - 1][toY - 1]->color = p[x][y]->color;
-			p[toX - 1][toY - 1]->alive = p[x][y]->alive;
-			p[toX - 1][toY - 1]->count = p[x][y]->count + 1;
-		}
-		else printf("ºÒ°¡´ÉÇÑ ÀÌµ¿ÀÔ´Ï´Ù.\n");
-	}
-	// ÆùÀÌ ³¡±îÁö °¡¸é ½Â±Ş
+	// í°ì´ ëê¹Œì§€ ê°€ë©´ ìŠ¹ê¸‰
 	if (toX == 1 || toX == 8)
 		if (p[toX - 1][toY - 1]->n == PAWN)
 			Pawnlomotion(p, toX - 1, toY - 1);
-
 }
+
 
 void knight_move(Piece* (*p)[8], int x, int y) {
 	int toX, toY;
+	char tmp;
 
-	while (1)
-	{
-		printf("ÀÌµ¿ÇÒ Ä­ ÁÂÇ¥:");
-		scanf("%d %d", &toX, &toY);
+	printf("ì´ë™í•  ì¹¸ ì¢Œí‘œ:");
+	scanf(" %c %d", &tmp, &toX);
 
-		if ((toX - 1) == x && (toY - 1) == y) printf("ÇöÀç À§Ä¡ÀÔ´Ï´Ù.\n");      //ÇöÀç À§Ä¡ ºÒ°¡´É
-		else if (p[x][y]->color == p[toX - 1][toY - 1]->color) printf("ºÒ°¡´ÉÇÑ ÀÌµ¿ÀÔ´Ï´Ù.\n");      //°°Àº Æí ¸Ô±â ºÒ°¡
-		else if (((abs(x - (toX - 1)) == 1) && (abs(y - (toY - 1)) == 2)) || ((abs(x - (toX - 1)) == 2) && (abs(y - (toY - 1)) == 1))) {
-			if (turn)turn = 0;
-			else turn = 1;
-			p[x][y]->isempty = 1;
-			p[toX - 1][toY - 1]->isempty = 0;
-			p[toX - 1][toY - 1]->n = p[x][y]->n;
-			p[toX - 1][toY - 1]->color = p[x][y]->color;
-			p[toX - 1][toY - 1]->alive = p[x][y]->alive;
-			p[toX - 1][toY - 1]->count = p[x][y]->count + 1;
-			break;
-		}
-		else
-			printf("ºÒ°¡´ÉÇÑ ÀÌµ¿ÀÔ´Ï´Ù.\n");
+	toY = (int)(tmp - 'a' + 1);
+
+	if ((toX - 1) == x && (toY - 1) == y) printf("í˜„ì¬ ìœ„ì¹˜ì…ë‹ˆë‹¤.\n"); //í˜„ì¬ ìœ„ì¹˜ ë¶ˆê°€ëŠ¥
+	else if (p[x][y]->color == p[toX - 1][toY - 1]->color) printf("ë¶ˆê°€ëŠ¥í•œ ì´ë™ì…ë‹ˆë‹¤.\n"); //ê°™ì€ í¸ ë¨¹ê¸° ë¶ˆê°€
+	else if (((abs(x - (toX - 1)) == 1) && (abs(y - (toY - 1)) == 2)) || ((abs(x - (toX - 1)) == 2) && (abs(y - (toY - 1)) == 1))) {
+		statuemove(p, x, y, toX, toY);
 	}
+	else
+		printf("ë¶ˆê°€ëŠ¥í•œ ì´ë™ì…ë‹ˆë‹¤.\n");
 }
+
+
 
 void bishop_move(Piece* (*p)[8], int x, int y) {
-	int toX, toY;
+	int toX, toY, blockDR_X = 7, blockDR_Y = 7, blockUL_X = 0, blockUL_Y = 0, blockDL_X = 7, blockDL_Y = 7, blockUR_X = 0, blockUR_Y = 7;
+	char tmp;
 
-	while (1)
-	{
-		printf("ÀÌµ¿ÇÒ Ä­ ÁÂÇ¥:");
-		scanf("%d %d", &toX, &toY);
+	printf("ì´ë™í•  ì¹¸ ì¢Œí‘œ:");
+	scanf(" %c %d", &tmp, &toX);
 
-		if ((toX - 1) == x && (toY - 1) == y) printf("ÇöÀç À§Ä¡ÀÔ´Ï´Ù.\n");
-		else if (p[x][y]->color == p[toX - 1][toY - 1]->color) printf("ºÒ°¡´ÉÇÑ ÀÌµ¿ÀÔ´Ï´Ù.\n");
-		else if (abs(x - (toX - 1)) != abs(y - (toY - 1))) printf("ºÒ°¡´ÉÇÑ ÀÌµ¿ÀÔ´Ï´Ù.\n");
-		else
-			break;
-	}
+	toY = (int)(tmp - 'a' + 1);
 
-	if (turn)turn = 0;
-	else turn = 1;
-	p[x][y]->isempty = 1;
-	p[toX - 1][toY - 1]->isempty = 0;
-	p[toX - 1][toY - 1]->n = p[x][y]->n;
-	p[toX - 1][toY - 1]->color = p[x][y]->color;
-	p[toX - 1][toY - 1]->alive = p[x][y]->alive;
-	p[toX - 1][toY - 1]->count = p[x][y]->count + 1;
-}
-
-void rook_move(Piece* (*p)[8], int x, int y) {
-	int toX, toY;
-
-	while (1)
-	{
-		printf("ÀÌµ¿ÇÒ Ä­ ÁÂÇ¥:");
-		scanf("%d %d", &toX, &toY);
-
-		if ((toX - 1) == x && (toY - 1) == y) printf("ÇöÀç À§Ä¡ÀÔ´Ï´Ù.\n");
-		else if (p[x][y]->color == p[toX - 1][toY - 1]->color) printf("ºÒ°¡´ÉÇÑ ÀÌµ¿ÀÔ´Ï´Ù.\n");
-		else if ((abs(x - (toX - 1)) > 0 && abs(y - (toY - 1)) > 0)) printf("ºÒ°¡´ÉÇÑ ÀÌµ¿ÀÔ´Ï´Ù.\n");
-		else
-			break;
-	}
-
-	if (turn)turn = 0;
-	else turn = 1;
-	p[x][y]->isempty = 1;
-	p[toX - 1][toY - 1]->isempty = 0;
-	p[toX - 1][toY - 1]->n = p[x][y]->n;
-	p[toX - 1][toY - 1]->color = p[x][y]->color;
-	p[toX - 1][toY - 1]->alive = p[x][y]->alive;
-	p[toX - 1][toY - 1]->count = p[x][y]->count + 1;
-}
-void queen_move(Piece* (*p)[8], int x, int y) {
-	int toX, toY;
-	while (1)
-	{
-		printf("ÀÌµ¿ÇÒ Ä­ ÁÂÇ¥:");
-		scanf("%d %d", &toX, &toY);
-
-		if ((toX - 1) == x && (toY - 1) == y) printf("ÇöÀç À§Ä¡ÀÔ´Ï´Ù.\n");
-		else if (p[x][y]->color == p[toX - 1][toY - 1]->color) printf("ºÒ°¡´ÉÇÑ ÀÌµ¿ÀÔ´Ï´Ù.\n");
-		else if ((abs(x - (toX - 1)) == abs(y - (toY - 1))) || (abs(x - (toX - 1)) > 0 && abs(y - (toY - 1)) == 0) || (abs(x - (toX - 1)) == 0 && abs(y - (toY - 1)) > 0)) {
-			if (turn)turn = 0;
-			else turn = 1;
-			p[x][y]->isempty = 1;
-			p[toX - 1][toY - 1]->isempty = 0;
-			p[toX - 1][toY - 1]->n = p[x][y]->n;
-			p[toX - 1][toY - 1]->color = p[x][y]->color;
-			p[toX - 1][toY - 1]->alive = p[x][y]->alive;
-			p[toX - 1][toY - 1]->count = p[x][y]->count + 1;
+	//ë¹„ìˆ ì¥ì• ë¬¼ ì°¾ê¸°
+	for (int i = x + 1, j = y + 1; i <= 7 && j <= 7; i++, j++) //ì•„ë˜ ì˜¤ë¥¸ìª½ ì¥ì• ë¬¼
+		if (p[i][j]->isempty == 0) {
+			blockDR_X = i;
+			blockDR_Y = j;
 			break;
 		}
-		else
-			printf("ºÒ°¡´ÉÇÑ ÀÌµ¿ÀÔ´Ï´Ù.\n");
-	}
+	for (int i = x - 1, j = y - 1; i >= 0 && j >= 0; i--, j--) //ìœ„ ì™¼ìª½ ì¥ì• ë¬¼
+		if (p[i][j]->isempty == 0) {
+			blockUL_X = i;
+			blockUL_Y = j;
+			break;
+		}
+	for (int i = x + 1, j = y - 1; i <= 7 && j >= 0; i++, j--) //ì•„ë˜ ì™¼ìª½ ì¥ì• ë¬¼
+		if (p[i][j]->isempty == 0) {
+			blockDL_X = i;
+			blockDL_Y = j;//ì™¼ìª½ ì•„ë˜ìª½ ì¥ì• ë¬¼
+			break;
+		}
+	for (int i = x - 1, j = y + 1; i >= 0 && j <= 7; i--, j++) //ìœ„ ì˜¤ë¥¸ìª½ ì¥ì• ë¬¼
+		if (p[i][j]->isempty == 0) {
+			blockUR_X = i;
+			blockUR_Y = j;
+			break;
+		}
+
+	if ((toX - 1) == x && (toY - 1) == y) printf("í˜„ì¬ ìœ„ì¹˜ì…ë‹ˆë‹¤.\n");
+	else if (p[x][y]->color == p[toX - 1][toY - 1]->color) printf("ë¶ˆê°€ëŠ¥í•œ ì´ë™ì…ë‹ˆë‹¤.\n");
+	else if (abs(x - (toX - 1)) != abs(y - (toY - 1))) printf("ë¶ˆê°€ëŠ¥í•œ ì´ë™ì…ë‹ˆë‹¤.\n");
+	else if (p[toX - 1][toY - 1]->isMove == 0) printf("ë¶ˆê°€ëŠ¥í•œ ì´ë™ì…ë‹ˆë‹¤.\n");
+	else
+		statuemove(p, x, y, toX, toY);
 }
+
+
+void rook_move(Piece* (*p)[8], int x, int y) {
+	int toX, toY, blockD = 7, blockU = 0, blockR = 7, blockL = 0;
+	char tmp;
+
+	printf("ì´ë™í•  ì¹¸ ì¢Œí‘œ:");
+	scanf(" %c %d", &tmp, &toX);
+
+	toY = (int)(tmp - 'a' + 1);
+
+	for (int i = x + 1; i <= 7; i++) // ì•„ë˜ìª½ ì¥ì• ë¬¼
+		if (p[i][y]->isempty == 0) {
+			blockD = i;
+			break;
+		}
+	for (int i = x - 1; i >= 0; i--) // ìœ„ìª½ ì¥ì• ë¬¼
+		if (p[i][y]->isempty == 0) {
+			blockU = i;
+			break;
+		}
+	for (int i = y + 1; i <= 7; i++) // ì˜¤ë¥¸ìª½ ì¥ì• ë¬¼
+		if (p[x][i]->isempty == 0) {
+			blockR = i;
+			break;
+		}
+	for (int i = y - 1; i >= 0; i--) // ì™¼ìª½ ì¥ì• ë¬¼
+		if (p[x][i]->isempty == 0) {
+			blockL = i;
+			break;
+		}
+
+	if ((toX - 1) == x && (toY - 1) == y) printf("í˜„ì¬ ìœ„ì¹˜ì…ë‹ˆë‹¤.\n");
+	else if (p[x][y]->color == p[toX - 1][toY - 1]->color) printf("ë¶ˆê°€ëŠ¥í•œ ì´ë™ì…ë‹ˆë‹¤.\n");
+	else if ((abs(x - (toX - 1)) > 0 && abs(y - (toY - 1)) > 0)) printf("ë¶ˆê°€ëŠ¥í•œ ì´ë™ì…ë‹ˆë‹¤.\n");
+	else if (p[toX - 1][toY - 1]->isMove == 0) printf("ë¶ˆê°€ëŠ¥í•œ ì´ë™ì…ë‹ˆë‹¤.\n");
+	else
+		statuemove(p, x, y, toX, toY);
+}
+
+
+void queen_move(Piece* (*p)[8], int x, int y) {
+	int toX, toY, blockDR_X = 7, blockDR_Y = 7, blockUL_X = 0, blockUL_Y = 0, blockDL_X = 7, blockDL_Y = 7, blockUR_X = 0, blockUR_Y = 7, blockD = 7, blockU = 0, blockR = 7, blockL = 0;
+	char tmp;
+
+	printf("ì´ë™í•  ì¹¸ ì¢Œí‘œ:");
+	scanf(" %c %d", &tmp, &toX);
+
+	toY = (int)(tmp - 'a' + 1);
+
+	//í€¸ ì¥ì• ë¬¼ ì°¾ê¸°(ê¸°ì¡´ì˜ ë¹„ìˆê³¼ ë£©ê³¼ ë™ì¼)
+	for (int i = x + 1, j = y + 1; i <= 7 && j <= 7; i++, j++) //ì•„ë˜ ì˜¤ë¥¸ìª½ ì¥ì• ë¬¼
+		if (p[i][j]->isempty == 0) {
+			blockDR_X = i;
+			blockDR_Y = j;
+			break;
+		}
+	for (int i = x - 1, j = y - 1; i >= 0 && j >= 0; i--, j--) //ìœ„ ì™¼ìª½ ì¥ì• ë¬¼
+		if (p[i][j]->isempty == 0) {
+			blockUL_X = i;
+			blockUL_Y = j;
+			break;
+		}
+	for (int i = x + 1, j = y - 1; i <= 7 && j >= 0; i++, j--) //ì•„ë˜ ì™¼ìª½ ì¥ì• ë¬¼
+		if (p[i][j]->isempty == 0) {
+			blockDL_X = i;
+			blockDL_Y = j;
+			break;
+		}
+	for (int i = x - 1, j = y + 1; i >= 0 && j <= 7; i--, j++) //ìœ„ ì˜¤ë¥¸ìª½ ì¥ì• ë¬¼
+		if (p[i][j]->isempty == 0) {
+			blockUR_X = i;
+			blockUR_Y = j;
+			break;
+		}
+
+	for (int i = x + 1; i <= 7; i++) // ì•„ë˜ìª½ ì¥ì• ë¬¼
+		if (p[i][y]->isempty == 0) {
+			blockD = i;
+			break;
+		}
+	for (int i = x - 1; i >= 0; i--) // ìœ„ìª½ ì¥ì• ë¬¼
+		if (p[i][y]->isempty == 0) {
+			blockU = i;
+			break;
+		}
+	for (int i = y + 1; i <= 7; i++) // ì˜¤ë¥¸ìª½ ì¥ì• ë¬¼
+		if (p[x][i]->isempty == 0) {
+			blockR = i;
+			break;
+		}
+	for (int i = y - 1; i >= 0; i--) // ì™¼ìª½ ì¥ì• ë¬¼
+		if (p[x][i]->isempty == 0) {
+			blockL = i;
+			break;
+		}
+
+
+	if ((toX - 1) == x && (toY - 1) == y) printf("í˜„ì¬ ìœ„ì¹˜ì…ë‹ˆë‹¤.\n");
+	else if (p[x][y]->color == p[toX - 1][toY - 1]->color) printf("ë¶ˆê°€ëŠ¥í•œ ì´ë™ì…ë‹ˆë‹¤.\n");
+	else if (p[toX - 1][toY - 1]->isMove == 0) printf("ë¶ˆê°€ëŠ¥í•œ ì´ë™ì…ë‹ˆë‹¤.");
+	else if ((abs(x - (toX - 1)) == abs(y - (toY - 1))) || (abs(x - (toX - 1)) > 0 && abs(y - (toY - 1)) == 0) || (abs(x - (toX - 1)) == 0 && abs(y - (toY - 1)) > 0))
+		statuemove(p, x, y, toX, toY);
+	else
+		printf("ë¶ˆê°€ëŠ¥í•œ ì´ë™ì…ë‹ˆë‹¤.\n");
+}
+
+
 void king_move(Piece* (*p)[8], int x, int y) {
 	int toX, toY;
+	char tmp;
 
-	while (1)
-	{
-		printf("ÀÌµ¿ÇÒ Ä­ ÁÂÇ¥:");
-		scanf("%d %d", &toX, &toY);
+	printf("ì´ë™í•  ì¹¸ ì¢Œí‘œ:");
+	scanf(" %c %d", &tmp, &toX);
 
-		if ((toX - 1) == x && (toY - 1) == y) printf("ÇöÀç À§Ä¡ÀÔ´Ï´Ù.\n");
-		else if (p[x][y]->color == p[toX - 1][toY - 1]->color) printf("ºÒ°¡´ÉÇÑ ÀÌµ¿ÀÔ´Ï´Ù.\n");
-		else if (abs(x - (toX - 1)) > 1 || abs(y - (toY - 1)) > 1) printf("ºÒ°¡´ÉÇÑ ÀÌµ¿ÀÔ´Ï´Ù.\n");
-		else
-			break;
-	}
+	toY = (int)(tmp - 'a' + 1);
 
-	if (turn)turn = 0;
-	else turn = 1;
-	p[x][y]->isempty = 1;
-	p[toX - 1][toY - 1]->isempty = 0;
-	p[toX - 1][toY - 1]->n = p[x][y]->n;
-	p[toX - 1][toY - 1]->color = p[x][y]->color;
-	p[toX - 1][toY - 1]->alive = p[x][y]->alive;
-	p[toX - 1][toY - 1]->count = p[x][y]->count + 1;
+	if ((toX - 1) == x && (toY - 1) == y) printf("í˜„ì¬ ìœ„ì¹˜ì…ë‹ˆë‹¤.\n");
+	else if (p[x][y]->color == p[toX - 1][toY - 1]->color) printf("ë¶ˆê°€ëŠ¥í•œ ì´ë™ì…ë‹ˆë‹¤.\n");
+	else if (abs(x - (toX - 1)) > 1 || abs(y - (toY - 1)) > 1) printf("ë¶ˆê°€ëŠ¥í•œ ì´ë™ì…ë‹ˆë‹¤.\n");
+	else
+		statuemove(p, x, y, toX, toY);
 }
 
+//ì²´í¬ì¸ì§€ í™•ì¸í•˜ëŠ” í•¨ìˆ˜
+int check(Piece* (*p)[8]) {
+	int King_x, King_y, Knight_num = 0, Knight1_x, Knight1_y, Knight2_x = 0, Knight2_y = 0;
+	for (int i = 0; i < 8; i++)
+		for (int j = 0; j < 8; j++)
+			if (p[i][j]->n == KING && p[i][j]->color == turn % 2) { //í‚¹ì˜ ìœ„ì¹˜ í™•ì¸
+				King_x = i;
+				King_y = j;
+			}
+			else if (p[i][j]->n == KNIGHT && p[i][j]->color == (turn + 1) % 2) { //ë‚˜ì´íŠ¸ì˜ ìœ„ì¹˜ í™•ì¸
+				Knight_num++;
+				Knight1_x = i;
+				Knight1_y = j;
+			}
+	if (Knight_num == 2) //ë‚˜ì´íŠ¸ê°€ 2ê°œì¼ ê²½ìš° ë‘ë²ˆì§¸ ë‚˜ì´íŠ¸ ìœ„ì¹˜ í™•ì¸
+		for (int i = Knight1_x - 1; i >= 0; i--)
+			for (int j = Knight1_y - 1; j >= 0; j--)
+				if (p[i][j]->n == KNIGHT && p[i][j]->color == (turn + 1) % 2) {
+					Knight2_x = i;
+					Knight2_y = j;
+				}
+
+	for (int i = King_x + 1, j = King_y + 1; i <= 7 && j <= 7; i++, j++)
+		if (p[i][j]->isempty == 0) { //ì•„ë˜ ì˜¤ë¥¸ìª½ ì¥ì• ë¬¼ì— ìƒëŒ€ í€¸ í˜¹ì€ ë¹„ìˆ í™•ì¸
+			if ((p[i][j]->color == (turn + 1) % 2) && ((p[i][j]->n == QUEEN) || (p[i][j]->n == BISHOP))) {
+				return 1;
+			}
+			else
+				break;
+		}
+	for (int i = King_x - 1, j = King_y - 1; i >= 0 && j >= 0; i--, j--) //ìœ„ ì™¼ìª½ ì¥ì• ë¬¼ì— ìƒëŒ€ í€¸ í˜¹ì€ ë¹„ìˆ í™•ì¸
+		if (p[i][j]->isempty == 0) {
+			if ((p[i][j]->color == (turn + 1) % 2) && ((p[i][j]->n == QUEEN) || (p[i][j]->n == BISHOP))) {
+				return 1;
+			}
+			else
+				break;
+		}
+	for (int i = King_x + 1, j = King_y - 1; i <= 7 && j >= 0; i++, j--) //ì•„ë˜ ì™¼ìª½ ì¥ì• ë¬¼ì— ìƒëŒ€ í€¸ í˜¹ì€ ë¹„ìˆ í™•ì¸
+		if (p[i][j]->isempty == 0) {
+			if ((p[i][j]->color == (turn + 1) % 2) && ((p[i][j]->n == QUEEN) || (p[i][j]->n == BISHOP))) {
+				return 1;
+			}
+			else
+				break;
+		}
+	for (int i = King_x - 1, j = King_y + 1; i >= 0 && j <= 7; i--, j++) //ìœ„ ì˜¤ë¥¸ìª½ ì¥ì• ë¬¼ì— ìƒëŒ€ í€¸ í˜¹ì€ ë¹„ìˆ í™•ì¸
+		if (p[i][j]->isempty == 0) {
+			if ((p[i][j]->color == (turn + 1) % 2) && ((p[i][j]->n == QUEEN) || (p[i][j]->n == BISHOP))) {
+				return 1;
+			}
+			else
+				break;
+		}
+	for (int i = King_x + 1; i <= 7; i++) // ì•„ë˜ìª½ ì¥ì• ë¬¼ì— ìƒëŒ€ í€¸ í˜¹ì€ ë£© í™•ì¸
+		if (p[i][King_y]->isempty == 0) {
+			if ((p[i][King_y]->color == (turn + 1) % 2) && ((p[i][King_y]->n == QUEEN) || (p[i][King_y]->n == ROOK))) {
+				return 1;
+			}
+			else
+				break;
+		}
+	for (int i = King_x - 1; i >= 0; i--) // ìœ„ìª½ ì¥ì• ë¬¼ì— ìƒëŒ€ í€¸ í˜¹ì€ ë£© í™•ì¸
+		if (p[i][King_y]->isempty == 0) {
+			if ((p[i][King_y]->color == (turn + 1) % 2) && ((p[i][King_y]->n == QUEEN) || (p[i][King_y]->n == ROOK))) {
+				return 1;
+			}
+			else
+				break;
+		}
+	for (int i = King_y + 1; i <= 7; i++) // ì˜¤ë¥¸ìª½ ì¥ì• ë¬¼ì— ìƒëŒ€ í€¸ í˜¹ì€ ë£© í™•ì¸
+		if (p[King_x][i]->isempty == 0) {
+			if ((p[King_x][i]->color == (turn + 1) % 2) && ((p[King_x][i]->n == QUEEN) || (p[King_x][i]->n == ROOK))) {
+				return 1;
+			}
+			else
+				break;
+		}
+	for (int i = King_y - 1; i >= 0; i--) // ì™¼ìª½ ì¥ì• ë¬¼ì— ìƒëŒ€ í€¸ í˜¹ì€ ë£© í™•ì¸
+		if (p[King_x][i]->isempty == 0) {
+			if ((p[King_x][i]->color == (turn + 1) % 2) && ((p[King_x][i]->n == QUEEN) || (p[King_x][i]->n == ROOK))) {
+				return 1;
+			}
+			else
+				break;
+		}
+	if (Knight_num == 2) { //ìƒëŒ€ ë‚˜ì´íŠ¸ê°€ 2ê°œì¼ë•Œ ìœ„ì¹˜ í™•ì¸ í›„ ì²´í¬
+		if (((abs(King_x - Knight1_x) == 1) && (abs(King_y - Knight1_y) == 2)) || ((abs(King_x - Knight1_x) == 2) && (abs(King_y - Knight1_y) == 1)) || ((abs(King_x - Knight2_x) == 1) && (abs(King_y - Knight2_y) == 2)) || ((abs(King_x - Knight2_x) == 2) && (abs(King_y - Knight2_y) == 1))) {
+			return 1;
+		}
+	}
+	else if (Knight_num == 1) { //ìƒëŒ€ ë‚˜ì´íŠ¸ê°€ 1ê°œì¼ë•Œ ìœ„ì¹˜ í™•ì¸ í›„ ì²´í¬
+		if (((abs(King_x - Knight1_x) == 1) && (abs(King_y - Knight1_y) == 2)) || ((abs(King_x - Knight1_x) == 2) && (abs(King_y - Knight1_y) == 1)))
+			return 1;
+	}
+
+	if (turn % 2 == 0) { //ë°±ìƒ‰ì˜ í„´ì¼ë•Œ í‚¹ê³¼ í° ìœ„ì¹˜ ë¹„êµ í›„ ì²´í¬
+		if ((King_x > 0) && (King_y > 0) && (King_y < 7))
+			if (((p[King_x - 1][King_y - 1]->n == PAWN) && (p[King_x - 1][King_y - 1]->color == 1)) || ((p[King_x - 1][King_y + 1]->n == PAWN) && (p[King_x - 1][King_y + 1]->color == 1)))
+				return 1;
+			else if (King_x > 0 && King_y == 0)
+				if ((p[King_x - 1][King_y + 1]->n == PAWN) && (p[King_x - 1][King_y + 1]->color == 1))
+					return 1;
+				else if (King_x > 0 && King_y == 7)
+					if ((p[King_x - 1][King_y - 1]->n == PAWN) && (p[King_x - 1][King_y - 1]->color == 1))
+						return 1;
+	}
+	else if ((turn + 1) % 2 == 0) { ////í‘ìƒ‰ì˜ í„´ì¼ë•Œ í‚¹ê³¼ í° ìœ„ì¹˜ ë¹„êµ í›„ ì²´í¬
+		if ((King_x < 7) && (King_y > 0) && (King_y < 7))
+			if (((p[King_x + 1][King_y - 1]->n == PAWN) && (p[King_x + 1][King_y - 1]->color == 0)) || ((p[King_x + 1][King_y + 1]->n == PAWN) && (p[King_x + 1][King_y + 1]->color == 0)))
+				return 1;
+			else if (King_x < 7 && King_y == 0)
+				if ((p[King_x + 1][King_y + 1]->n == PAWN) && (p[King_x + 1][King_y + 1]->color == 0))
+					return 1;
+				else if (King_x < 7 && King_y == 7)
+					if ((p[King_x + 1][King_y - 1]->n == PAWN) && (p[King_x + 1][King_y - 1]->color == 0))
+						return 1;
+	}
+
+	else return 0;
+	return 0;
+}
+
+void saveGame(Piece* (*p)[8]) {
+
+	FILE* fp;
+	char path[20];
+
+	printf("ì´ë¦„ì„ ì…ë ¥í•˜ì„¸ìš”: ");
+	scanf("%s", path);
+	strcat(path, ".bin");
+
+	fp = fopen(path, "wb");
+	if (fp == NULL) {
+		printf("íŒŒì¼ì„ ì—´ ìˆ˜ ì—†ìŠµë‹ˆë‹¤.\n");
+		return;
+	}
+
+	for (int i = 0; i < 8; i++)
+		for (int j = 0; j < 8; j++)
+			fwrite(p[i][j], sizeof(*p[i][j]), 1, fp);
+	fclose(fp);
+
+	printf("ì €ì¥ì´ ì™„ë£Œë˜ì—ˆìŠµë‹ˆë‹¤.\n");
+
+}
+
+void LoadGame(Piece* (*p)[8]) {
+
+	FILE* fp;
+	int lineNum = 0, bytes;
+	char path[20], buffer[35];
+
+	printf("ì´ë¦„ì„ ì…ë ¥í•˜ì„¸ìš”: ");
+	scanf("%s", path);
+	strcat(path, ".bin");
+
+	fp = fopen(path, "rb");
+	if (fp == NULL) {
+		printf("íŒŒì¼ì„ ì—´ ìˆ˜ ì—†ìŠµë‹ˆë‹¤.\n");
+		return;
+	}
+
+	for (int i = 0; i < 8; i++)
+		for (int j = 0; j < 8; j++) fread(p[i][j], sizeof(*p[i][j]), 1, fp);
+}
+
+void clearBuffer(void) {
+	while (getchar() != '\n');
+}
+
+
+
+
 void move(Piece* (*p)[8]) {
-	int fromX, fromY;
+	int fromX, fromY, save;
+	char tmp;
+
+	while (1) {
+		printf("1.ì´ë™  2.ê²Œì„ ì €ì¥ ");
+		if (scanf("%d", &save) != 1) clearBuffer();
+		if (save == 1) break;
+		else if (save == 2) saveGame(p);
+	}
 
 	while (1)
 	{
-		if (turn) printf("Èæ»öÀÇ ÅÏ!\n");
-		else printf("¹é»öÀÇ ÅÏ!\n");
+		printf("ì´ë™í•  ê¸°ë¬¼ ì¢Œí‘œ(ì…ë ¥ ë°©ì‹ : a 1) : ");
+		scanf(" %c %d", &tmp, &fromX);
+			
+		fromY = (int)(tmp - 'a' + 1);
 
-		printf("ÀÌµ¿ÇÒ ±â¹° ÁÂÇ¥:");
-		scanf("%d %d", &fromX, &fromY);
-		
-		if (fromX < 1 || fromX>8 || fromY < 1 || fromY>8) printf("¸ÊÀ» ¹ş¾î³­ ÁÂÇ¥ÀÔ´Ï´Ù.\n"); // ¸ÊÀ» ¹ş¾î³ª¸é
-		else if (p[fromX - 1][fromY - 1]->color != turn) printf("ÀÚ½ÅÀÇ ÅÏÀÌ ¾Æ´Õ´Ï´Ù.\n"); //ÀÚ½ÅÀÇ ÅÏÀÌ ¾Æ´Ï¸é
+		if (fromX < 1 || fromX>8 || fromY < 1 || fromY>8) printf("ë§µì„ ë²—ì–´ë‚œ ì¢Œí‘œì…ë‹ˆë‹¤.\n"); // ë§µì„ ë²—ì–´ë‚˜ë©´
 		else
 		{
-			if (p[fromX - 1][fromY - 1]->isempty == 1) printf("ÀÌµ¿ÇÒ ¼ö ÀÖ´Â ±â¹°ÀÌ ¾ø½À´Ï´Ù..\n"); // ±× ÁÂÇ¥¿¡ ¸»ÀÌ ¾øÀ¸¸é ´Ù½Ã ÀÔ·Â¹ŞÀ½
+			if (p[fromX - 1][fromY - 1]->isempty == 1) printf("ì´ë™í•  ìˆ˜ ìˆëŠ” ê¸°ë¬¼ì´ ì—†ìŠµë‹ˆë‹¤..\n"); // ê·¸ ì¢Œí‘œì— ë§ì´ ì—†ìœ¼ë©´ ë‹¤ì‹œ ì…ë ¥ë°›ìŒ
+			else if (turn % 2 == 0 && p[fromX - 1][fromY - 1]->color == 1) printf("ë°±ìƒ‰ì˜ í„´ì…ë‹ˆë‹¤.\n");
+			else if (turn % 2 == 1 && p[fromX - 1][fromY - 1]->color == 0) printf("í‘ìƒ‰ì˜ í„´ì…ë‹ˆë‹¤.\n");
 			else
 				break;
 		}
@@ -460,12 +896,25 @@ void move(Piece* (*p)[8]) {
 
 }
 
+void startGame(Piece* (*p)[8]) {
+	int menuNum;
+	while (1) {
+		printf("1. ìƒˆ ê²Œì„  2. ì´ì–´í•˜ê¸° 3. ì¢…ë£Œ\n");
+		if (!scanf("%d", &menuNum)) clearBuffer();
+		if (menuNum == 1) break;
+		else if (menuNum == 2) {
+			LoadGame(p);
+			break;
+		}
+		else if (menuNum == 3) exit(0);
+	}
+}
 
 int main() {
 
 	Piece* map[8][8];
 
-	for (int i = 0; i < 8; i++) { //¸Ê ¹è¿­¿¡ ¸Ş¸ğ¸® ÇÒ´ç{
+	for (int i = 0; i < 8; i++) { //ë§µ ë°°ì—´ì— ë©”ëª¨ë¦¬ í• ë‹¹{
 		for (int j = 0; j < 8; j++) {
 			map[i][j] = (Piece*)malloc(sizeof(Piece));
 			map[i][j]->isempty = 1;
@@ -473,16 +922,20 @@ int main() {
 	}
 
 	Initialize_map(map);
+	startGame(map);
+	system("cls");
 
 	while (1)
 	{
-		print_map(map, -1, -1); // ¿òÁ÷ÀÏ ±â¹°À» ¼±ÅÃ ¾ÈÇßÀ» ¶§ÀÇ ¸Ê Ãâ·Â
+		print_map(map, -1, -1); // ì›€ì§ì¼ ê¸°ë¬¼ì„ ì„ íƒ ì•ˆí–ˆì„ ë•Œì˜ ë§µ ì¶œë ¥
+		if (check(map) == 1)
+			printf("ì²´í¬\n");
 		move(map);
 		printf("\n");
 		system("cls");
 	}
 
-	for (int i = 0; i < 8; i++) { //¸Ê ¹è¿­ ¸Ş¸ğ¸® ÇÒ´ç ÇØÁ¦
+	for (int i = 0; i < 8; i++) { //ë§µ ë°°ì—´ ë©”ëª¨ë¦¬ í• ë‹¹ í•´ì œ
 		for (int j = 0; j < 8; j++) {
 			free(map[i][j]);
 		}
