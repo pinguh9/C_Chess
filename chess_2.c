@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <Windows.h>
 #define _CRT_SECURE_NO_WARNINGS
 enum name { PAWN, KNIGHT, BISHOP, ROOK, QUEEN, KING, NONE };
 int turn = 0;
@@ -789,7 +790,7 @@ int check(Piece* (*p)[8]) {
 	return 0;
 }
 
-void saveGame(Piece* (*p)[8]) {
+void saveGame(Piece* (*p)[8]) {//게임 저장
 
 	FILE* fp;
 	char path[20];
@@ -813,7 +814,7 @@ void saveGame(Piece* (*p)[8]) {
 
 }
 
-void LoadGame(Piece* (*p)[8]) {
+void LoadGame(Piece* (*p)[8]) {//게임 불러오기
 
 	FILE* fp;
 	int lineNum = 0, bytes;
@@ -825,7 +826,8 @@ void LoadGame(Piece* (*p)[8]) {
 
 	fp = fopen(path, "rb");
 	if (fp == NULL) {
-		printf("파일을 열 수 없습니다.\n");
+		printf("저장된 게임이 없습니다.새로운 게임을 시작합니다.\n");
+		Sleep(3000);
 		return;
 	}
 
@@ -833,11 +835,9 @@ void LoadGame(Piece* (*p)[8]) {
 		for (int j = 0; j < 8; j++) fread(p[i][j], sizeof(*p[i][j]), 1, fp);
 }
 
-void clearBuffer(void) {
+void clearBuffer(void) {//입력 버퍼 비우기
 	while (getchar() != '\n');
 }
-
-
 
 
 void move(Piece* (*p)[8]) {
@@ -845,10 +845,11 @@ void move(Piece* (*p)[8]) {
 	char tmp;
 
 	while (1) {
-		printf("1.이동  2.게임 저장 ");
+		printf("1.이동  2.게임 저장 3.게임 종료 ");
 		if (scanf("%d", &save) != 1) clearBuffer();
 		if (save == 1) break;
-		else if (save == 2) saveGame(p);
+		if (save == 2) saveGame(p);
+		if (save == 3) exit(0);
 	}
 
 	while (1)
@@ -896,7 +897,7 @@ void move(Piece* (*p)[8]) {
 
 }
 
-void startGame(Piece* (*p)[8]) {
+void startGame(Piece* (*p)[8]) {//게임 시작 메뉴
 	int menuNum;
 	while (1) {
 		printf("1. 새 게임  2. 이어하기 3. 종료\n");
