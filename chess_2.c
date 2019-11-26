@@ -410,14 +410,16 @@ void statuemove(Piece* (*p)[8], int x, int y, int toX, int toY) {
 	p[toX - 1][toY - 1]->count = p[x][y]->count + 1;
 	p[x][y]->isempty = 1;
 	p[x][y]->n = NONE;
-	p[x][y]->color = 3;
+	p[x][y]->color = 2;
 	p[x][y]->alive = 0;
 	p[x][y]->count = 0;
 	turn++;
 }
 
+
 //폰 이동 함수
 void pawn_move(Piece* (*p)[8], int x, int y) {
+	Piece temp;
 	int toX, toY;
 	char tmp;
 
@@ -430,6 +432,26 @@ void pawn_move(Piece* (*p)[8], int x, int y) {
 		printf("불가능한 이동입니다.\n");
 		return;
 	}
+
+	temp = *p[toX - 1][toY - 1];	//이동시 킹이 체크 될 경우 이동 불가
+	statuemove(p, x, y, toX, toY);
+	p[toX - 1][toY - 1]->count--;
+	turn--;
+	if (check(p) == 0) {
+		statuemove(p, toX - 1, toY - 1, x + 1, y + 1);
+		p[x][y]->count--;
+		turn--;
+		*p[toX - 1][toY - 1] = temp;
+	}
+	else {
+		statuemove(p, toX - 1, toY - 1, x + 1, y + 1);
+		p[x][y]->count--;
+		turn--;
+		*p[toX - 1][toY - 1] = temp;
+		printf("불가능한 이동입니다.\n");
+		return;
+	}
+
 
 	if (p[x][y]->color == 0) { //선택한 말이 백일때
 		if (p[toX - 1][toY - 1]->isempty == 1) { //가려는 곳에 말이 없을 때
@@ -484,11 +506,30 @@ void pawn_move(Piece* (*p)[8], int x, int y) {
 void knight_move(Piece* (*p)[8], int x, int y) {
 	int toX, toY;
 	char tmp;
-
+	Piece temp;
 	printf("이동할 칸 좌표:");
 	scanf(" %c %d", &tmp, &toX);
 
 	toY = (int)(tmp - 'a' + 1);
+
+	temp = *p[toX - 1][toY - 1];	//이동시 킹이 체크 될 경우 이동 불가
+	statuemove(p, x, y, toX, toY);
+	p[toX - 1][toY - 1]->count--;
+	turn--;
+	if (check(p) == 0) {
+		statuemove(p, toX - 1, toY - 1, x + 1, y + 1);
+		p[x][y]->count--;
+		turn--;
+		*p[toX - 1][toY - 1] = temp;
+	}
+	else {
+		statuemove(p, toX - 1, toY - 1, x + 1, y + 1);
+		p[x][y]->count--;
+		turn--;
+		*p[toX - 1][toY - 1] = temp;
+		printf("불가능한 이동입니다.\n");
+		return;
+	}
 
 	if ((toX - 1) == x && (toY - 1) == y) printf("현재 위치입니다.\n"); //현재 위치 불가능
 	else if (p[x][y]->color == p[toX - 1][toY - 1]->color) printf("불가능한 이동입니다.\n"); //같은 편 먹기 불가
@@ -504,7 +545,7 @@ void knight_move(Piece* (*p)[8], int x, int y) {
 void bishop_move(Piece* (*p)[8], int x, int y) {
 	int toX, toY, blockDR_X = 7, blockDR_Y = 7, blockUL_X = 0, blockUL_Y = 0, blockDL_X = 7, blockDL_Y = 7, blockUR_X = 0, blockUR_Y = 7;
 	char tmp;
-
+	Piece temp;
 	printf("이동할 칸 좌표:");
 	scanf(" %c %d", &tmp, &toX);
 
@@ -536,6 +577,25 @@ void bishop_move(Piece* (*p)[8], int x, int y) {
 			break;
 		}
 
+	temp = *p[toX - 1][toY - 1];	//이동시 킹이 체크 될 경우 이동 불가
+	statuemove(p, x, y, toX, toY);
+	p[toX - 1][toY - 1]->count--;
+	turn--;
+	if (check(p) == 0) {
+		statuemove(p, toX - 1, toY - 1, x + 1, y + 1);
+		p[x][y]->count--;
+		turn--;
+		*p[toX - 1][toY - 1] = temp;
+	}
+	else {
+		statuemove(p, toX - 1, toY - 1, x + 1, y + 1);
+		p[x][y]->count--;
+		turn--;
+		*p[toX - 1][toY - 1] = temp;
+		printf("불가능한 이동입니다.\n");
+		return;
+	}
+
 	if ((toX - 1) == x && (toY - 1) == y) printf("현재 위치입니다.\n");
 	else if (p[x][y]->color == p[toX - 1][toY - 1]->color) printf("불가능한 이동입니다.\n");
 	else if (abs(x - (toX - 1)) != abs(y - (toY - 1))) printf("불가능한 이동입니다.\n");
@@ -548,6 +608,7 @@ void bishop_move(Piece* (*p)[8], int x, int y) {
 void rook_move(Piece* (*p)[8], int x, int y) {
 	int toX, toY, blockD = 7, blockU = 0, blockR = 7, blockL = 0;
 	char tmp;
+	Piece temp;
 
 	printf("이동할 칸 좌표:");
 	scanf(" %c %d", &tmp, &toX);
@@ -575,6 +636,25 @@ void rook_move(Piece* (*p)[8], int x, int y) {
 			break;
 		}
 
+	temp = *p[toX - 1][toY - 1];	//이동시 킹이 체크 될 경우 이동 불가
+	statuemove(p, x, y, toX, toY);
+	p[toX - 1][toY - 1]->count--;
+	turn--;
+	if (check(p) == 0) {
+		statuemove(p, toX - 1, toY - 1, x + 1, y + 1);
+		p[x][y]->count--;
+		turn--;
+		*p[toX - 1][toY - 1] = temp;
+	}
+	else {
+		statuemove(p, toX - 1, toY - 1, x + 1, y + 1);
+		p[x][y]->count--;
+		turn--;
+		*p[toX - 1][toY - 1] = temp;
+		printf("불가능한 이동입니다.\n");
+		return;
+	}
+
 	if ((toX - 1) == x && (toY - 1) == y) printf("현재 위치입니다.\n");
 	else if (p[x][y]->color == p[toX - 1][toY - 1]->color) printf("불가능한 이동입니다.\n");
 	else if ((abs(x - (toX - 1)) > 0 && abs(y - (toY - 1)) > 0)) printf("불가능한 이동입니다.\n");
@@ -587,6 +667,7 @@ void rook_move(Piece* (*p)[8], int x, int y) {
 void queen_move(Piece* (*p)[8], int x, int y) {
 	int toX, toY, blockDR_X = 7, blockDR_Y = 7, blockUL_X = 0, blockUL_Y = 0, blockDL_X = 7, blockDL_Y = 7, blockUR_X = 0, blockUR_Y = 7, blockD = 7, blockU = 0, blockR = 7, blockL = 0;
 	char tmp;
+	Piece temp;
 
 	printf("이동할 칸 좌표:");
 	scanf(" %c %d", &tmp, &toX);
@@ -640,6 +721,24 @@ void queen_move(Piece* (*p)[8], int x, int y) {
 			break;
 		}
 
+	temp = *p[toX - 1][toY - 1];	//이동시 킹이 체크 될 경우 이동 불가
+	statuemove(p, x, y, toX, toY);
+	p[toX - 1][toY - 1]->count--;
+	turn--;
+	if (check(p) == 0) {
+		statuemove(p, toX - 1, toY - 1, x + 1, y + 1);
+		p[x][y]->count--;
+		turn--;
+		*p[toX - 1][toY - 1] = temp;
+	}
+	else {
+		statuemove(p, toX - 1, toY - 1, x + 1, y + 1);
+		p[x][y]->count--;
+		turn--;
+		*p[toX - 1][toY - 1] = temp;
+		printf("불가능한 이동입니다.\n");
+		return;
+	}
 
 	if ((toX - 1) == x && (toY - 1) == y) printf("현재 위치입니다.\n");
 	else if (p[x][y]->color == p[toX - 1][toY - 1]->color) printf("불가능한 이동입니다.\n");
@@ -676,11 +775,13 @@ int check(Piece* (*p)[8]) {
 				King_x = i;
 				King_y = j;
 			}
+
 			else if (p[i][j]->n == KNIGHT && p[i][j]->color == (turn + 1) % 2) { //나이트의 위치 확인
 				Knight_num++;
 				Knight1_x = i;
 				Knight1_y = j;
 			}
+
 	if (Knight_num == 2) //나이트가 2개일 경우 두번째 나이트 위치 확인
 		for (int i = Knight1_x - 1; i >= 0; i--)
 			for (int j = Knight1_y - 1; j >= 0; j--)
@@ -790,6 +891,218 @@ int check(Piece* (*p)[8]) {
 	return 0;
 }
 
+int checkmate(Piece* (*p)[8]) {
+	int King_x, King_y;
+	Piece temp;
+	for (int i = 0; i < 8; i++)
+		for (int j = 0; j < 8; j++)
+			if (p[i][j]->n == KING && p[i][j]->color == turn % 2) { //킹의 위치 확인
+				King_x = i;
+				King_y = j;
+			}
+
+	if (King_x > 0 && King_x < 7 && King_y > 0 && King_y < 7) {
+		for (int i = King_x - 1; i <= King_x + 1; i++)
+			for (int j = King_y - 1; j <= King_y + 1; j++) {
+				if ((p[King_x][King_y]->color != p[i][j]->color) && (i != King_x || j != King_y)) {
+					temp = *p[i][j];
+					statuemove(p, King_x, King_y, i + 1, j + 1);
+					turn--;
+					if (check(p) == 0) {
+						statuemove(p, i, j, King_x + 1, King_y + 1);
+						turn--;
+						*p[i][j] = temp;
+						return 0;
+					}
+					else {
+						statuemove(p, i, j, King_x + 1, King_y + 1);
+						turn--;
+						*p[i][j] = temp;
+					}
+				}
+			}
+	}
+
+	else if (King_x == 0 && King_y > 0 && King_y < 7) {
+		for (int i = King_x; i <= King_x + 1; i++)
+			for (int j = King_y - 1; j <= King_y + 1; j++) {
+				if ((p[King_x][King_y]->color != p[i][j]->color) && (i != King_x || j != King_y)) {
+					temp = *p[i][j];
+					statuemove(p, King_x, King_y, i + 1, j + 1);
+					turn--;
+					if (check(p) == 0) {
+						statuemove(p, i, j, King_x + 1, King_y + 1);
+						turn--;
+						*p[i][j] = temp;
+						return 0;
+					}
+					else {
+						statuemove(p, i, j, King_x + 1, King_y + 1);
+						turn--;
+						*p[i][j] = temp;
+					}
+				}
+			}
+	}
+
+	else if (King_x == 7 && King_y > 0 && King_y < 7) {
+		for (int i = King_x; i >= King_x - 1; i--)
+			for (int j = King_y - 1; j <= King_y + 1; j++) {
+				if ((p[King_x][King_y]->color != p[i][j]->color) && (i != King_x || j != King_y)) {
+					temp = *p[i][j];
+					statuemove(p, King_x, King_y, i + 1, j + 1);
+					turn--;
+					if (check(p) == 0) {
+						statuemove(p, i, j, King_x + 1, King_y + 1);
+						turn--;
+						*p[i][j] = temp;
+						return 0;
+					}
+					else {
+						statuemove(p, i, j, King_x + 1, King_y + 1);
+						turn--;
+						*p[i][j] = temp;
+					}
+				}
+			}
+	}
+
+	else if (King_x > 0 && King_x < 7 && King_y == 0) {
+		for (int i = King_x - 1; i <= King_x + 1; i++)
+			for (int j = King_y; j <= King_y + 1; j++) {
+				if ((p[King_x][King_y]->color != p[i][j]->color) && (i != King_x || j != King_y)) {
+					temp = *p[i][j];
+					statuemove(p, King_x, King_y, i + 1, j + 1);
+					turn--;
+					if (check(p) == 0) {
+						statuemove(p, i, j, King_x + 1, King_y + 1);
+						turn--;
+						*p[i][j] = temp;
+						return 0;
+					}
+					else {
+						statuemove(p, i, j, King_x + 1, King_y + 1);
+						turn--;
+						*p[i][j] = temp;
+					}
+				}
+			}
+	}
+
+	else if (King_x > 0 && King_x < 7 && King_y == 7) {
+		for (int i = King_x - 1; i <= King_x + 1; i++)
+			for (int j = King_y; j >= King_y - 1; j--) {
+				if ((p[King_x][King_y]->color != p[i][j]->color) && (i != King_x || j != King_y)) {
+					temp = *p[i][j];
+					statuemove(p, King_x, King_y, i + 1, j + 1);
+					turn--;
+					if (check(p) == 0) {
+						statuemove(p, i, j, King_x + 1, King_y + 1);
+						turn--;
+						*p[i][j] = temp;
+						return 0;
+					}
+					else {
+						statuemove(p, i, j, King_x + 1, King_y + 1);
+						turn--;
+						*p[i][j] = temp;
+					}
+				}
+			}
+	}
+
+	else if (King_x == 0 && King_y == 0) {
+		for (int i = King_x; i <= King_x + 1; i++)
+			for (int j = King_y; j <= King_y + 1; j++) {
+				if ((p[King_x][King_y]->color != p[i][j]->color) && (i != King_x || j != King_y)) {
+					temp = *p[i][j];
+					statuemove(p, King_x, King_y, i + 1, j + 1);
+					turn--;
+					if (check(p) == 0) {
+						statuemove(p, i, j, King_x + 1, King_y + 1);
+						turn--;
+						*p[i][j] = temp;
+						return 0;
+					}
+					else {
+						statuemove(p, i, j, King_x + 1, King_y + 1);
+						turn--;
+						*p[i][j] = temp;
+					}
+				}
+			}
+	}
+
+	else if (King_x == 7 && King_y == 7) {
+		for (int i = King_x; i >= King_x - 1; i--)
+			for (int j = King_y; j >= King_y - 1; j--) {
+				if ((p[King_x][King_y]->color != p[i][j]->color) && (i != King_x || j != King_y)) {
+					temp = *p[i][j];
+					statuemove(p, King_x, King_y, i + 1, j + 1);
+					turn--;
+					if (check(p) == 0) {
+						statuemove(p, i, j, King_x + 1, King_y + 1);
+						turn--;
+						*p[i][j] = temp;
+						return 0;
+					}
+					else {
+						statuemove(p, i, j, King_x + 1, King_y + 1);
+						turn--;
+						*p[i][j] = temp;
+					}
+				}
+			}
+	}
+
+	else if (King_x == 0 && King_y == 7) {
+		for (int i = King_x; i <= King_x + 1; i++)
+			for (int j = King_y; j >= King_y - 1; j--) {
+				if ((p[King_x][King_y]->color != p[i][j]->color) && (i != King_x || j != King_y)) {
+					temp = *p[i][j];
+					statuemove(p, King_x, King_y, i + 1, j + 1);
+					turn--;
+					if (check(p) == 0) {
+						statuemove(p, i, j, King_x + 1, King_y + 1);
+						turn--;
+						*p[i][j] = temp;
+						return 0;
+					}
+					else {
+						statuemove(p, i, j, King_x + 1, King_y + 1);
+						turn--;
+						*p[i][j] = temp;
+					}
+				}
+			}
+	}
+
+	else if (King_x == 7 && King_y == 0) {
+		for (int i = King_x; i >= King_x - 1; i--)
+			for (int j = King_y; j <= King_y + 1; j++) {
+				if ((p[King_x][King_y]->color != p[i][j]->color) && (i != King_x || j != King_y)) {
+					temp = *p[i][j];
+					statuemove(p, King_x, King_y, i + 1, j + 1);
+					turn--;
+					if (check(p) == 0) {
+						statuemove(p, i, j, King_x + 1, King_y + 1);
+						turn--;
+						*p[i][j] = temp;
+						return 0;
+					}
+					else {
+						statuemove(p, i, j, King_x + 1, King_y + 1);
+						turn--;
+						*p[i][j] = temp;
+					}
+				}
+			}
+	}
+
+	return 1;
+}
+
+
 void saveGame(Piece* (*p)[8]) {//게임 저장
 
 	FILE* fp;
@@ -839,24 +1152,116 @@ void clearBuffer(void) {//입력 버퍼 비우기
 	while (getchar() != '\n');
 }
 
+void castling(Piece* (*p)[8]) {//수정중
+	int King_x, King_y, Rook1_x, Rook1_y, Rook2_x, Rook2_y,Rooknum = 0, num;
+	Piece temp;
+
+	for (int i = 0; i < 8; i++) {
+		for (int j = 0; j < 8; j++) {
+			if (p[i][j]->n == KING && p[i][j]->color == turn % 2) { //킹의 위치 확인
+				King_x = i;
+				King_y = j;
+			}
+			
+			if (p[i][j]->n == ROOK && p[i][j]->color == turn % 2) { //킹의 위치 확인
+				if (Rooknum == 0) {
+					Rook1_x = i;
+					Rook1_y = j;
+					Rooknum++;
+				}
+				else {
+					Rook2_x = i;
+					Rook2_y = j;
+				}
+			}
+		}
+	}
+
+	if (p[King_x][King_y]->count != 0) {
+		printf("캐슬링 불가\n");
+		return;
+	}
+
+	else {
+
+		printf("1.킹 사이드 캐슬링 2. 퀸 사이드 캐슬링");
+		scanf("%d", &num);
+
+
+		if (num == 1) {
+			
+			if (p[Rook2_x][Rook2_y]->count != 0) {
+				printf("룩 이동함. 캐슬링 불가\n");
+				return;
+			}
+
+			else {
+				for (int i = King_y + 1; i < Rook2_y; i++) {
+					if (p[King_x][i]->isempty == 0) {
+						printf("장애물. 캐슬링 불가\n");
+						return;
+					}
+				}
+				
+				temp = *p[King_x][King_y+2];	//이동시 킹이 체크 될 경우 이동 불가
+				statuemove(p, King_x, King_y, King_x, King_y+2);
+				p[King_x][King_y+2]->count--;
+				turn--;
+				if (check(p) == 0) {
+					statuemove(p, King_x,King_y+2, King_x, King_y);
+					p[King_x][King_y]->count--;
+					turn--;
+					*p[King_x][King_y] = temp;
+				}
+				else {
+					statuemove(p, King_x, King_y+2, King_x, King_y);
+					p[King_x][King_y]->count--;
+					turn--;
+					*p[King_x][King_y+2] = temp;
+					printf("불가능한 이동입니다.\n");
+					return;
+				}
+				
+				
+			}
+		}
+
+		if (num == 2) {
+			if (p[Rook1_x][Rook1_y]->count != 0) {
+				printf("캐슬링 불가\n");
+				return;
+			}
+			else {
+
+			}
+		}
+
+	}
+
+	system("cls");
+	print_map(p, -1, -1);
+
+}
+
 
 void move(Piece* (*p)[8]) {
 	int fromX, fromY, save;
 	char tmp;
 
 	while (1) {
-		printf("1.이동  2.게임 저장 3.게임 종료 ");
+		printf("1.이동  2.게임 저장 3.캐슬링 4.종료 ");
 		if (scanf("%d", &save) != 1) clearBuffer();
 		if (save == 1) break;
 		if (save == 2) saveGame(p);
-		if (save == 3) exit(0);
+		if (save == 3) castling(p);
+		if (save == 4) exit(0);
 	}
 
 	while (1)
 	{
 		printf("이동할 기물 좌표(입력 방식 : a 1) : ");
 		scanf(" %c %d", &tmp, &fromX);
-			
+
 		fromY = (int)(tmp - 'a' + 1);
 
 		if (fromX < 1 || fromX>8 || fromY < 1 || fromY>8) printf("맵을 벗어난 좌표입니다.\n"); // 맵을 벗어나면
@@ -897,6 +1302,7 @@ void move(Piece* (*p)[8]) {
 
 }
 
+
 void startGame(Piece* (*p)[8]) {//게임 시작 메뉴
 	int menuNum;
 	while (1) {
@@ -910,6 +1316,8 @@ void startGame(Piece* (*p)[8]) {//게임 시작 메뉴
 		else if (menuNum == 3) exit(0);
 	}
 }
+
+
 
 int main() {
 
@@ -929,8 +1337,15 @@ int main() {
 	while (1)
 	{
 		print_map(map, -1, -1); // 움직일 기물을 선택 안했을 때의 맵 출력
-		if (check(map) == 1)
-			printf("체크\n");
+		if (check(map) == 1) {
+			if (checkmate(map) == 1) {
+				printf("체크메이트\n");
+				exit(0);
+			}
+			else
+				printf("체크\n");
+		}
+
 		move(map);
 		printf("\n");
 		system("cls");
