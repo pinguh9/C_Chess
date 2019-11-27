@@ -1152,7 +1152,7 @@ void clearBuffer(void) {//입력 버퍼 비우기
 	while (getchar() != '\n');
 }
 
-void castling(Piece* (*p)[8]) {//수정중
+void castling(Piece* (*p)[8]) {
 	int King_x, King_y, Rook1_x, Rook1_y, Rook2_x, Rook2_y,Rooknum = 0, num;
 	Piece temp;
 
@@ -1204,21 +1204,20 @@ void castling(Piece* (*p)[8]) {//수정중
 				}
 				
 				temp = *p[King_x][King_y+2];	//이동시 킹이 체크 될 경우 이동 불가
-				statuemove(p, King_x, King_y, King_x, King_y+2);
+				statuemove(p, King_x, King_y, King_x+1, King_y+3);
 				p[King_x][King_y+2]->count--;
 				turn--;
 				if (check(p) == 0) {
-					statuemove(p, King_x,King_y+2, King_x, King_y);
-					p[King_x][King_y]->count--;
-					turn--;
+					statuemove(p, Rook2_x, Rook2_y, King_x + 1, King_y + 2);
+					p[King_x][King_y+2]->count++;
 					*p[King_x][King_y] = temp;
 				}
 				else {
-					statuemove(p, King_x, King_y+2, King_x, King_y);
+					statuemove(p, King_x, King_y+2, King_x+1, King_y+1);
 					p[King_x][King_y]->count--;
 					turn--;
 					*p[King_x][King_y+2] = temp;
-					printf("불가능한 이동입니다.\n");
+					printf("이동시 체크. 캐슬링 불가\n");
 					return;
 				}
 				
@@ -1232,6 +1231,31 @@ void castling(Piece* (*p)[8]) {//수정중
 				return;
 			}
 			else {
+				
+				for (int i = Rook1_y + 1; i < King_y; i++) {
+					if (p[King_x][i]->isempty == 0) {
+						printf("장애물. 캐슬링 불가\n");
+						return;
+					}
+				}
+
+				temp = *p[King_x][King_y - 2];	//이동시 킹이 체크 될 경우 이동 불가
+				statuemove(p, King_x, King_y, King_x + 1, King_y - 1);
+				p[King_x][King_y - 2]->count--;
+				turn--;
+				if (check(p) == 0) {
+					statuemove(p, Rook1_x, Rook1_y, King_x + 1, King_y);
+					p[King_x][King_y - 2]->count++;
+					*p[King_x][King_y] = temp;
+				}
+				else {
+					statuemove(p, King_x, King_y - 2, King_x + 1, King_y + 1);
+					p[King_x][King_y]->count--;
+					turn--;
+					*p[King_x][King_y - 2] = temp;
+					printf("이동시 체크. 캐슬링 불가\n");
+					return;
+				}
 
 			}
 		}
