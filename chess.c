@@ -14,7 +14,9 @@ typedef struct piece
         _Bool alive;//사망이면 0, 생존이면 1
         _Bool isMove;//갈 수 있으면 1, 없으면 0
 }Piece;
-
+Piece enemy;
+int enemy_x;
+int enemy_y;
 int check(Piece* (*p)[8]);
 
 void initialize_Move(Piece* (*p)[8], int x, int y) // 장애물을 확인하고 갈 수 있으면 isMove를 1로, 갈 수 없으면 0으로 바꾼다.
@@ -29,8 +31,41 @@ void initialize_Move(Piece* (*p)[8], int x, int y) // 장애물을 확인하고 갈 수 있
                 switch (p[x][y]->n) // ★☆★☆ x-1, y-1로 수정해야 할수도
                 {
                 case 0: // PAWN
-                        break;
+                        for(i=0; i<8; i++)
+                                for(j=0; j<8; j++) {
+                                        if (p[x][y]->color == 1) // 흑이면
+                                        {
+                                                if ((i == (x + 1)) && j == y && p[i][j]->color != 1)
+                                                        p[i][j]->isMove = 1;
+                                                else if (i == (x + 2) && j == y && p[x][y]->count == 0 && p[i][j]->color != 1)
+                                                        p[i][j]->isMove = 1;
+
+                                                else if (isEnpassantTurn[1][j] == turn-1 && turn>1 && i == x+1 && p[i][j]->color != 1) // 앙파상 가능한 턴이면
+                                                        p[i][j]->isMove = 1;
+                                                else
+                                                        p[i][j]->isMove = 0;
+                                                break;
+                                        }
+                                        else
+                                        {
+                                                if ((i == (x - 1)) && j == y && p[i][j]->color != 0)
+                                                        p[i][j]->isMove = 1;
+                                                else if (i == (x - 2) && j == y && p[x][y]->count == 0 && p[i][j]->color != 0)
+                                                        p[i][j]->isMove = 1;
+                                                else if (isEnpassantTurn[0][j] == turn-1 && turn>1 && i == x-1 && p[i][j]->color != 0) // 앙파상 가능한 턴이면
+                                                        p[i][j]->isMove = 1;
+                                                else
+                                                        p[i][j]->isMove = 0;
+                                                break;
+                                        }
+                                }
                 case 1: // KNIGHT
+                        for(i=0; i<8; i++)
+                                for(j=0; j<8; j++)
+                                        if(((abs(x - i) == 2) && abs(y - j) == 1) || ((abs(x - i) == 1) && abs(y - j) == 2) && (p[i][j]->color != p[x][y]->color))
+                                                p[i][j]->isMove = 1;
+                                        else
+                                                p[i][j]->isMove = 0;
                         break;
                 case 2: // BISHOP
                         for (i = x + 1, j = y + 1; i <= 7 && j <= 7; i++, j++) //아래 오른쪽 장애물
@@ -276,10 +311,10 @@ void print_map(Piece* (*p)[8], int x, int y) {
                                                                 else
                                                                         printf(" -- ");
                                                         }
-                                                        else if (isEnpassantTurn[1][j] == turn-1 && turn>1 && i == x+1) // 앙파상 가능한 턴이면
-                                                        {
-                                                                printf(" @@ ");
-                                                        }
+                                                        // else if (isEnpassantTurn[1][j] == turn-1 && turn>1 && i == x+1) // 앙파상 가능한 턴이면
+                                                        // {
+                                                        //         printf(" @@ ");
+                                                        // }
 
                                                         else
                                                                 printf(" -- ");
@@ -296,10 +331,10 @@ void print_map(Piece* (*p)[8], int x, int y) {
                                                                 else
                                                                         printf(" -- ");
                                                         }
-                                                        else if (isEnpassantTurn[0][j] == turn-1 && turn>1 && i == x-1) // 앙파상 가능한 턴이면
-                                                        {
-                                                                printf(" @@ ");
-                                                        }
+                                                        // else if (isEnpassantTurn[0][j] == turn-1 && turn>1 && i == x-1) // 앙파상 가능한 턴이면
+                                                        // {
+                                                        //         printf(" @@ ");
+                                                        // }
                                                         else
                                                                 printf(" -- ");
                                                         break;
@@ -804,11 +839,31 @@ void queen_move(Piece* (*p)[8], int x, int y) {
 void king_move(Piece* (*p)[8], int x, int y) {
         int toX, toY;
         char tmp;
+        Piece temp;
 
         printf("이동할 칸 좌표:");
         scanf(" %c %d", &tmp, &toX);
 
         toY = (int)(tmp - 'a' + 1);
+
+        temp = *p[toX - 1][toY - 1];
+        statuemove(p, x, y, toX, toY);
+        p[toX - 1][toY - 1]->count--;
+        turn--;
+        if (check(p) == 0) {
+                statuemove(p, toX - 1, toY - 1, x + 1, y + 1);
+                p[x][y]->count--;
+                turn--;
+                *p[toX - 1][toY - 1] = temp;
+        }
+        else {
+                statuemove(p, toX - 1, toY - 1, x + 1, y + 1);
+                p[x][y]->count--;
+                turn--;
+                *p[toX - 1][toY - 1] = temp;
+                printf("불가능한 이동입니다.\n");
+                return;
+        }
 
         if ((toX - 1) == x && (toY - 1) == y) printf("현재 위치입니다.\n");
         else if (p[x][y]->color == p[toX - 1][toY - 1]->color) printf("불가능한 이동입니다.\n");
@@ -832,6 +887,7 @@ int check(Piece* (*p)[8]) {
                                 Knight1_x = i;
                                 Knight1_y = j;
                         }
+        printf("King_x = %d, King_y = %d\n", King_x, King_y);
 
         if (Knight_num == 2) //나이트가 2개일 경우 두번째 나이트 위치 확인
                 for (int i = Knight1_x - 1; i >= 0; i--)
@@ -844,6 +900,9 @@ int check(Piece* (*p)[8]) {
         for (int i = King_x + 1, j = King_y + 1; i <= 7 && j <= 7; i++, j++)
                 if (p[i][j]->isempty == 0) { //아래 오른쪽 장애물에 상대 퀸 혹은 비숏 확인
                         if ((p[i][j]->color == (turn + 1) % 2) && ((p[i][j]->n == QUEEN) || (p[i][j]->n == BISHOP))) {
+                                enemy = *p[i][j];
+                                enemy_x = i;
+                                enemy_y = j;
                                 return 1;
                         }
                         else
@@ -852,6 +911,9 @@ int check(Piece* (*p)[8]) {
         for (int i = King_x - 1, j = King_y - 1; i >= 0 && j >= 0; i--, j--) //위 왼쪽 장애물에 상대 퀸 혹은 비숏 확인
                 if (p[i][j]->isempty == 0) {
                         if ((p[i][j]->color == (turn + 1) % 2) && ((p[i][j]->n == QUEEN) || (p[i][j]->n == BISHOP))) {
+                                enemy = *p[i][j];
+                                enemy_x = i;
+                                enemy_y = j;
                                 return 1;
                         }
                         else
@@ -860,6 +922,9 @@ int check(Piece* (*p)[8]) {
         for (int i = King_x + 1, j = King_y - 1; i <= 7 && j >= 0; i++, j--) //아래 왼쪽 장애물에 상대 퀸 혹은 비숏 확인
                 if (p[i][j]->isempty == 0) {
                         if ((p[i][j]->color == (turn + 1) % 2) && ((p[i][j]->n == QUEEN) || (p[i][j]->n == BISHOP))) {
+                                enemy = *p[i][j];
+                                enemy_x = i;
+                                enemy_y = j;
                                 return 1;
                         }
                         else
@@ -868,6 +933,9 @@ int check(Piece* (*p)[8]) {
         for (int i = King_x - 1, j = King_y + 1; i >= 0 && j <= 7; i--, j++) //위 오른쪽 장애물에 상대 퀸 혹은 비숏 확인
                 if (p[i][j]->isempty == 0) {
                         if ((p[i][j]->color == (turn + 1) % 2) && ((p[i][j]->n == QUEEN) || (p[i][j]->n == BISHOP))) {
+                                enemy = *p[i][j];
+                                enemy_x = i;
+                                enemy_y = j;
                                 return 1;
                         }
                         else
@@ -876,6 +944,9 @@ int check(Piece* (*p)[8]) {
         for (int i = King_x + 1; i <= 7; i++) // 아래쪽 장애물에 상대 퀸 혹은 룩 확인
                 if (p[i][King_y]->isempty == 0) {
                         if ((p[i][King_y]->color == (turn + 1) % 2) && ((p[i][King_y]->n == QUEEN) || (p[i][King_y]->n == ROOK))) {
+                                enemy = *p[i][King_y];
+                                enemy_x = i;
+                                enemy_y = King_y;
                                 return 1;
                         }
                         else
@@ -884,6 +955,9 @@ int check(Piece* (*p)[8]) {
         for (int i = King_x - 1; i >= 0; i--) // 위쪽 장애물에 상대 퀸 혹은 룩 확인
                 if (p[i][King_y]->isempty == 0) {
                         if ((p[i][King_y]->color == (turn + 1) % 2) && ((p[i][King_y]->n == QUEEN) || (p[i][King_y]->n == ROOK))) {
+                                enemy = *p[i][King_y];
+                                enemy_x = i;
+                                enemy_y = King_y;
                                 return 1;
                         }
                         else
@@ -892,6 +966,9 @@ int check(Piece* (*p)[8]) {
         for (int i = King_y + 1; i <= 7; i++) // 오른쪽 장애물에 상대 퀸 혹은 룩 확인
                 if (p[King_x][i]->isempty == 0) {
                         if ((p[King_x][i]->color == (turn + 1) % 2) && ((p[King_x][i]->n == QUEEN) || (p[King_x][i]->n == ROOK))) {
+                                enemy = *p[King_x][i];
+                                enemy_x = i;
+                                enemy_y = King_y;
                                 return 1;
                         }
                         else
@@ -900,51 +977,107 @@ int check(Piece* (*p)[8]) {
         for (int i = King_y - 1; i >= 0; i--) // 왼쪽 장애물에 상대 퀸 혹은 룩 확인
                 if (p[King_x][i]->isempty == 0) {
                         if ((p[King_x][i]->color == (turn + 1) % 2) && ((p[King_x][i]->n == QUEEN) || (p[King_x][i]->n == ROOK))) {
+                                enemy = *p[King_x][i];
+                                enemy_x = King_x;
+                                enemy_y = i;
                                 return 1;
                         }
                         else
                                 break;
                 }
         if (Knight_num == 2) { //상대 나이트가 2개일때 위치 확인 후 체크
-                if (((abs(King_x - Knight1_x) == 1) && (abs(King_y - Knight1_y) == 2)) || ((abs(King_x - Knight1_x) == 2) && (abs(King_y - Knight1_y) == 1)) || ((abs(King_x - Knight2_x) == 1) && (abs(King_y - Knight2_y) == 2)) || ((abs(King_x - Knight2_x) == 2) && (abs(King_y - Knight2_y) == 1))) {
+                if (((abs(King_x - Knight1_x) == 1) && (abs(King_y - Knight1_y) == 2)) || ((abs(King_x - Knight1_x) == 2) && (abs(King_y - Knight1_y) == 1))) {
+                        enemy = *p[Knight1_x][Knight1_y];
+                        enemy_x = Knight1_x;
+                        enemy_y = Knight1_y;
+                        return 1;
+                }
+                else if(((abs(King_x - Knight2_x) == 1) && (abs(King_y - Knight2_y) == 2)) || ((abs(King_x - Knight2_x) == 2) && (abs(King_y - Knight2_y) == 1))) {
+                        enemy = *p[Knight2_x][Knight2_y];
+                        enemy_x = Knight2_x;
+                        enemy_y = Knight2_y;
                         return 1;
                 }
         }
         else if (Knight_num == 1) { //상대 나이트가 1개일때 위치 확인 후 체크
-                if (((abs(King_x - Knight1_x) == 1) && (abs(King_y - Knight1_y) == 2)) || ((abs(King_x - Knight1_x) == 2) && (abs(King_y - Knight1_y) == 1)))
+                if (((abs(King_x - Knight1_x) == 1) && (abs(King_y - Knight1_y) == 2)) || ((abs(King_x - Knight1_x) == 2) && (abs(King_y - Knight1_y) == 1))) {
+                        enemy = *p[Knight1_x][Knight1_y];
+                        enemy_x = Knight1_x;
+                        enemy_y = Knight1_y;
                         return 1;
+                }
         }
 
         if (turn % 2 == 0) { //백색의 턴일때 킹과 폰 위치 비교 후 체크
-                if ((King_x > 0) && (King_y > 0) && (King_y < 7))
-                        if (((p[King_x - 1][King_y - 1]->n == PAWN) && (p[King_x - 1][King_y - 1]->color == 1)) || ((p[King_x - 1][King_y + 1]->n == PAWN) && (p[King_x - 1][King_y + 1]->color == 1)))
+                if ((King_x > 0) && (King_y > 0) && (King_y < 7)) {
+                        if ((p[King_x - 1][King_y - 1]->n == PAWN) && (p[King_x - 1][King_y - 1]->color == 1)) {
+                                enemy = *p[King_x - 1][King_y - 1];
+                                enemy_x = King_x - 1;
+                                enemy_y = King_y - 1;
                                 return 1;
-                        else if (King_x > 0 && King_y == 0)
-                                if ((p[King_x - 1][King_y + 1]->n == PAWN) && (p[King_x - 1][King_y + 1]->color == 1))
-                                        return 1;
-                                else if (King_x > 0 && King_y == 7)
-                                        if ((p[King_x - 1][King_y - 1]->n == PAWN) && (p[King_x - 1][King_y - 1]->color == 1))
-                                                return 1;
+                        }
+                        else if ((p[King_x - 1][King_y + 1]->n == PAWN) && (p[King_x - 1][King_y + 1]->color == 1)) {
+                                enemy = *p[King_x - 1][King_y + 1];
+                                enemy_x = King_x - 1;
+                                enemy_y = King_y + 1;
+                                return 1;
+                        }
+                }
+                else if (King_x > 0 && King_y == 0) {
+                        if ((p[King_x - 1][King_y + 1]->n == PAWN) && (p[King_x - 1][King_y + 1]->color == 1)) {
+                                enemy = *p[King_x - 1][King_y + 1];
+                                enemy_x = King_x - 1;
+                                enemy_y = King_y + 1;
+                                return 1;
+                        }
+                }
+                else if (King_x > 0 && King_y == 7)
+                        if ((p[King_x - 1][King_y - 1]->n == PAWN) && (p[King_x - 1][King_y - 1]->color == 1)) {
+                                enemy = *p[King_x - 1][King_y - 1];
+                                enemy_x = King_x - 1;
+                                enemy_y = King_y - 1;
+                                return 1;
+                        }
         }
         else if ((turn + 1) % 2 == 0) { ////흑색의 턴일때 킹과 폰 위치 비교 후 체크
-                if ((King_x < 7) && (King_y > 0) && (King_y < 7))
-                        if (((p[King_x + 1][King_y - 1]->n == PAWN) && (p[King_x + 1][King_y - 1]->color == 0)) || ((p[King_x + 1][King_y + 1]->n == PAWN) && (p[King_x + 1][King_y + 1]->color == 0)))
+                if ((King_x < 7) && (King_y > 0) && (King_y < 7)) {
+                        if ((p[King_x + 1][King_y - 1]->n == PAWN) && (p[King_x + 1][King_y - 1]->color == 0)) {
+                                enemy = *p[King_x + 1][King_y - 1];
+                                enemy_x = King_x + 1;
+                                enemy_y = King_y - 1;
                                 return 1;
-                        else if (King_x < 7 && King_y == 0)
-                                if ((p[King_x + 1][King_y + 1]->n == PAWN) && (p[King_x + 1][King_y + 1]->color == 0))
-                                        return 1;
-                                else if (King_x < 7 && King_y == 7)
-                                        if ((p[King_x + 1][King_y - 1]->n == PAWN) && (p[King_x + 1][King_y - 1]->color == 0))
-                                                return 1;
+                        }
+                        else if((p[King_x + 1][King_y + 1]->n == PAWN) && (p[King_x + 1][King_y + 1]->color == 0)) {
+                                enemy = *p[King_x + 1][King_y + 1];
+                                enemy_x = King_x + 1;
+                                enemy_y = King_y + 1;
+                                return 1;
+                        }
+                }
+                else if (King_x < 7 && King_y == 0) {
+                        if ((p[King_x + 1][King_y + 1]->n == PAWN) && (p[King_x + 1][King_y + 1]->color == 0)) {
+                                enemy = *p[King_x + 1][King_y + 1];
+                                enemy_x = King_x + 1;
+                                enemy_y = King_y + 1;
+                                return 1;
+                        }
+                }
+                else if (King_x < 7 && King_y == 7)
+                        if ((p[King_x + 1][King_y - 1]->n == PAWN) && (p[King_x + 1][King_y - 1]->color == 0)) {
+                                enemy = *p[King_x + 1][King_y - 1];
+                                enemy_x = King_x + 1;
+                                enemy_y = King_y - 1;
+                                return 1;
+                        }
         }
 
-        else return 0;
         return 0;
 }
 
 int checkmate(Piece* (*p)[8]) {
         int King_x, King_y;
         Piece temp;
+        printf("enemy.n = %d, x = %d, y = %d\n", enemy.n, enemy_x, enemy_y);
         for (int i = 0; i < 8; i++)
                 for (int j = 0; j < 8; j++)
                         if (p[i][j]->n == KING && p[i][j]->color == turn % 2) { //킹의 위치 확인
@@ -1150,7 +1283,426 @@ int checkmate(Piece* (*p)[8]) {
                         }
         }
 
-        return 1;
+        switch (enemy.n) {
+        case 0:
+                for(int i=0; i<8; i++)
+                        for(int j=0; j<8; j++) {
+                                if(p[i][j]->color == turn % 2) {
+                                        initialize_Move(p, i, j);
+                                        if(p[enemy_x][enemy_y]->isMove == 1) {
+                                                temp = *p[enemy_x][enemy_y];
+                                                statuemove(p, i, j, enemy_x + 1, enemy_y + 1);
+                                                turn--;
+                                                if (check(p) == 0) {
+                                                        statuemove(p, enemy_x, enemy_y, i + 1, j + 1);
+                                                        turn--;
+                                                        *p[enemy_x][enemy_y] = temp;
+                                                        return 0;
+                                                }
+                                                else {
+                                                        statuemove(p, enemy_x, enemy_y, i + 1, j + 1);
+                                                        turn--;
+                                                        *p[enemy_x][enemy_y] = temp;
+                                                        return 1;
+                                                }
+                                        }
+
+                                }
+                        }
+                return 1;
+        case 1:
+                for(int i=0; i<8; i++)
+                        for(int j=0; j<8; j++) {
+                                if(p[i][j]->color == turn % 2) {
+                                        initialize_Move(p, i, j);
+                                        if(p[enemy_x][enemy_y]->isMove == 1) {
+                                                temp = *p[enemy_x][enemy_y];
+                                                statuemove(p, i, j, enemy_x + 1, enemy_y + 1);
+                                                turn--;
+                                                if (check(p) == 0) {
+                                                        statuemove(p, enemy_x, enemy_y, i + 1, j + 1);
+                                                        turn--;
+                                                        *p[enemy_x][enemy_y] = temp;
+                                                        return 0;
+                                                }
+                                                else {
+                                                        statuemove(p, enemy_x, enemy_y, i + 1, j + 1);
+                                                        turn--;
+                                                        *p[enemy_x][enemy_y] = temp;
+                                                        return 1;
+                                                }
+                                        }
+
+                                }
+                        }
+                return 1;
+        case 2:
+                for(int i=0; i<8; i++)
+                        for(int j=0; j<8; j++)
+                                if(p[i][j]->color == turn % 2) {
+                                        initialize_Move(p, i, j);
+                                        if(King_x > enemy_x && King_y > enemy_y) {
+                                                for(int k = 0; k<abs(King_x - enemy_x); k++) {
+                                                        if(p[enemy_x+k][enemy_y+k]->isMove == 1) {
+                                                                temp = *p[enemy_x+k][enemy_y+k];
+                                                                statuemove(p, i, j, enemy_x + k + 1, enemy_y + k + 1);
+                                                                turn--;
+                                                                if (check(p) == 0) {
+                                                                        statuemove(p, enemy_x+ k, enemy_y+ k, i  + 1, j  + 1);
+                                                                        turn--;
+                                                                        *p[enemy_x+k][enemy_y+k] = temp;
+                                                                        return 0;
+                                                                }
+                                                                else {
+                                                                        statuemove(p, enemy_x + k, enemy_y + k, i + 1, j + 1);
+                                                                        turn--;
+                                                                        *p[enemy_x+k][enemy_y+k] = temp;
+                                                                        return 1;
+                                                                }
+                                                        }
+                                                }
+                                        }
+                                        else if(King_x > enemy_x && King_y < enemy_y) {
+                                                for(int k = 0; k<abs(King_x - enemy_x); k++) {
+                                                        if(p[enemy_x+k][enemy_y-k]->isMove == 1) {
+                                                                temp = *p[enemy_x+k][enemy_y-k];
+                                                                statuemove(p, i, j, enemy_x + k + 1, enemy_y - k + 1);
+                                                                turn--;
+                                                                if (check(p) == 0) {
+                                                                        statuemove(p, enemy_x+ k, enemy_y-k, i  + 1, j  + 1);
+                                                                        turn--;
+                                                                        *p[enemy_x+k][enemy_y-k] = temp;
+                                                                        return 0;
+                                                                }
+                                                                else {
+                                                                        statuemove(p, enemy_x + k, enemy_y -k, i + 1, j + 1);
+                                                                        turn--;
+                                                                        *p[enemy_x+k][enemy_y-k] = temp;
+                                                                        return 1;
+                                                                }
+                                                        }
+                                                }
+                                        }
+                                        else if(King_x < enemy_x && King_y > enemy_y) {
+                                                for(int k = 0; k<abs(King_x - enemy_x); k++) {
+                                                        if(p[enemy_x-k][enemy_y+k]->isMove == 1) {
+                                                                temp = *p[enemy_x-k][enemy_y+k];
+                                                                statuemove(p, i, j, enemy_x -k + 1, enemy_y + k + 1);
+                                                                turn--;
+                                                                if (check(p) == 0) {
+                                                                        statuemove(p, enemy_x-k, enemy_y+ k, i  + 1, j  + 1);
+                                                                        turn--;
+                                                                        *p[enemy_x-k][enemy_y+k] = temp;
+                                                                        return 0;
+                                                                }
+                                                                else {
+                                                                        statuemove(p, enemy_x -k, enemy_y + k, i + 1, j + 1);
+                                                                        turn--;
+                                                                        *p[enemy_x-k][enemy_y+k] = temp;
+                                                                        return 1;
+                                                                }
+                                                        }
+                                                }
+                                        }
+                                        else if(King_x < enemy_x && King_y < enemy_y) {
+                                                for(int k = 0; k<abs(King_x - enemy_x); k++) {
+                                                        if(p[enemy_x-k][enemy_y-k]->isMove == 1) {
+                                                                temp = *p[enemy_x-k][enemy_y-k];
+                                                                statuemove(p, i, j, enemy_x -k + 1, enemy_y -k + 1);
+                                                                turn--;
+                                                                if (check(p) == 0) {
+                                                                        statuemove(p, enemy_x-k, enemy_y-k, i  + 1, j  + 1);
+                                                                        turn--;
+                                                                        *p[enemy_x-k][enemy_y-k] = temp;
+                                                                        return 0;
+                                                                }
+                                                                else {
+                                                                        statuemove(p, enemy_x -k, enemy_y -k, i + 1, j + 1);
+                                                                        turn--;
+                                                                        *p[enemy_x-k][enemy_y-k] = temp;
+                                                                        return 1;
+                                                                }
+                                                        }
+                                                }
+                                        }
+                                }
+        case 3:
+                for(int i=0; i<8; i++)
+                        for(int j=0; j<8; j++)
+                                if(p[i][j]->color == turn % 2) {
+                                        initialize_Move(p, i, j);
+                                        if(King_x > enemy_x && King_y == enemy_y) {
+                                                for(int k = 0; k<abs(King_x - enemy_x); k++) {
+                                                        if(p[enemy_x+k][enemy_y]->isMove == 1) {
+                                                                temp = *p[enemy_x+k][enemy_y];
+                                                                statuemove(p, i, j, enemy_x + k + 1, enemy_y + 1);
+                                                                turn--;
+                                                                if (check(p) == 0) {
+                                                                        statuemove(p, enemy_x+ k, enemy_y, i  + 1, j  + 1);
+                                                                        turn--;
+                                                                        *p[enemy_x+k][enemy_y] = temp;
+                                                                        return 0;
+                                                                }
+                                                                else {
+                                                                        statuemove(p, enemy_x + k, enemy_y, i + 1, j + 1);
+                                                                        turn--;
+                                                                        *p[enemy_x+k][enemy_y] = temp;
+                                                                        return 1;
+                                                                }
+                                                        }
+                                                }
+
+                                        }
+
+                                        else if(King_x < enemy_x && King_y == enemy_y) {
+                                                for(int k = 0; k<abs(King_x - enemy_x); k++) {
+                                                        if(p[enemy_x-k][enemy_y]->isMove == 1) {
+                                                                temp = *p[enemy_x-k][enemy_y];
+                                                                statuemove(p, i, j, enemy_x - k + 1, enemy_y + 1);
+                                                                turn--;
+                                                                if (check(p) == 0) {
+                                                                        statuemove(p, enemy_x- k, enemy_y, i  + 1, j  + 1);
+                                                                        turn--;
+                                                                        *p[enemy_x-k][enemy_y] = temp;
+                                                                        return 0;
+                                                                }
+                                                                else {
+                                                                        statuemove(p, enemy_x- k, enemy_y, i + 1, j + 1);
+                                                                        turn--;
+                                                                        *p[enemy_x-k][enemy_y] = temp;
+                                                                        return 1;
+                                                                }
+                                                        }
+                                                }
+
+                                        }
+                                        else if(King_x == enemy_x && King_y > enemy_y) {
+                                                for(int k = 0; k<abs(King_x - enemy_x); k++) {
+                                                        if(p[enemy_x][enemy_y+k]->isMove == 1) {
+                                                                temp = *p[enemy_x][enemy_y+k];
+                                                                statuemove(p, i, j, enemy_x  + 1, enemy_y+ k + 1);
+                                                                turn--;
+                                                                if (check(p) == 0) {
+                                                                        statuemove(p, enemy_x, enemy_y+ k, i  + 1, j  + 1);
+                                                                        turn--;
+                                                                        *p[enemy_x][enemy_y+k] = temp;
+                                                                        return 0;
+                                                                }
+                                                                else {
+                                                                        statuemove(p, enemy_x, enemy_y+ k, i + 1, j + 1);
+                                                                        turn--;
+                                                                        *p[enemy_x][enemy_y+k] = temp;
+                                                                        return 1;
+                                                                }
+                                                        }
+                                                }
+
+                                        }
+                                        else if(King_x == enemy_x && King_y < enemy_y) {
+                                                for(int k = 0; k<abs(King_x - enemy_x); k++) {
+                                                        if(p[enemy_x][enemy_y-k]->isMove == 1) {
+                                                                temp = *p[enemy_x][enemy_y-k];
+                                                                statuemove(p, i, j, enemy_x + 1, enemy_y -k+ 1);
+                                                                turn--;
+                                                                if (check(p) == 0) {
+                                                                        statuemove(p, enemy_x, enemy_y-k, i  + 1, j  + 1);
+                                                                        turn--;
+                                                                        *p[enemy_x][enemy_y-k] = temp;
+                                                                        return 0;
+                                                                }
+                                                                else {
+                                                                        statuemove(p, enemy_x, enemy_y-k, i + 1, j + 1);
+                                                                        turn--;
+                                                                        *p[enemy_x][enemy_y-k] = temp;
+                                                                        return 1;
+                                                                }
+                                                        }
+                                                }
+
+                                        }
+                                }
+                return 1;
+        case 4:
+                for(int i=0; i<8; i++)
+                        for(int j=0; j<8; j++)
+                                if(p[i][j]->color == turn % 2) {
+                                        initialize_Move(p, i, j);
+                                        if(King_x > enemy_x && King_y > enemy_y) {
+                                                for(int k = 0; k<abs(King_x - enemy_x); k++) {
+                                                        if(p[enemy_x+k][enemy_y+k]->isMove == 1) {
+                                                                temp = *p[enemy_x+k][enemy_y+k];
+                                                                statuemove(p, i, j, enemy_x + k + 1, enemy_y + k + 1);
+                                                                turn--;
+                                                                if (check(p) == 0) {
+                                                                        statuemove(p, enemy_x+ k, enemy_y+ k, i  + 1, j  + 1);
+                                                                        turn--;
+                                                                        *p[enemy_x+k][enemy_y+k] = temp;
+                                                                        return 0;
+                                                                }
+                                                                else {
+                                                                        statuemove(p, enemy_x + k, enemy_y + k, i + 1, j + 1);
+                                                                        turn--;
+                                                                        *p[enemy_x+k][enemy_y+k] = temp;
+                                                                        return 1;
+                                                                }
+                                                        }
+                                                }
+                                        }
+                                        else if(King_x > enemy_x && King_y < enemy_y) {
+                                                for(int k = 0; k<abs(King_x - enemy_x); k++) {
+                                                        if(p[enemy_x+k][enemy_y-k]->isMove == 1) {
+                                                                temp = *p[enemy_x+k][enemy_y-k];
+                                                                statuemove(p, i, j, enemy_x + k + 1, enemy_y - k + 1);
+                                                                turn--;
+                                                                if (check(p) == 0) {
+                                                                        statuemove(p, enemy_x+ k, enemy_y-k, i  + 1, j  + 1);
+                                                                        turn--;
+                                                                        *p[enemy_x+k][enemy_y-k] = temp;
+                                                                        return 0;
+                                                                }
+                                                                else {
+                                                                        statuemove(p, enemy_x + k, enemy_y -k, i + 1, j + 1);
+                                                                        turn--;
+                                                                        *p[enemy_x+k][enemy_y-k] = temp;
+                                                                        return 1;
+                                                                }
+                                                        }
+                                                }
+                                        }
+                                        else if(King_x < enemy_x && King_y > enemy_y) {
+                                                for(int k = 0; k<abs(King_x - enemy_x); k++) {
+                                                        if(p[enemy_x-k][enemy_y+k]->isMove == 1) {
+                                                                temp = *p[enemy_x-k][enemy_y+k];
+                                                                statuemove(p, i, j, enemy_x -k + 1, enemy_y + k + 1);
+                                                                turn--;
+                                                                if (check(p) == 0) {
+                                                                        statuemove(p, enemy_x-k, enemy_y+ k, i  + 1, j  + 1);
+                                                                        turn--;
+                                                                        *p[enemy_x-k][enemy_y+k] = temp;
+                                                                        return 0;
+                                                                }
+                                                                else {
+                                                                        statuemove(p, enemy_x -k, enemy_y + k, i + 1, j + 1);
+                                                                        turn--;
+                                                                        *p[enemy_x-k][enemy_y+k] = temp;
+                                                                        return 1;
+                                                                }
+                                                        }
+                                                }
+                                        }
+                                        else if(King_x < enemy_x && King_y < enemy_y) {
+                                                for(int k = 0; k<abs(King_x - enemy_x); k++) {
+                                                        if(p[enemy_x-k][enemy_y-k]->isMove == 1) {
+                                                                temp = *p[enemy_x-k][enemy_y-k];
+                                                                statuemove(p, i, j, enemy_x -k + 1, enemy_y -k + 1);
+                                                                turn--;
+                                                                if (check(p) == 0) {
+                                                                        statuemove(p, enemy_x-k, enemy_y-k, i  + 1, j  + 1);
+                                                                        turn--;
+                                                                        *p[enemy_x-k][enemy_y-k] = temp;
+                                                                        return 0;
+                                                                }
+                                                                else {
+                                                                        statuemove(p, enemy_x -k, enemy_y -k, i + 1, j + 1);
+                                                                        turn--;
+                                                                        *p[enemy_x-k][enemy_y-k] = temp;
+                                                                        return 1;
+                                                                }
+                                                        }
+
+                                                        else if(King_x > enemy_x && King_y == enemy_y) {
+                                                                for(int k = 0; k<abs(King_x - enemy_x); k++) {
+                                                                        if(p[enemy_x+k][enemy_y]->isMove == 1) {
+                                                                                temp = *p[enemy_x+k][enemy_y];
+                                                                                statuemove(p, i, j, enemy_x + k + 1, enemy_y + 1);
+                                                                                turn--;
+                                                                                if (check(p) == 0) {
+                                                                                        statuemove(p, enemy_x+ k, enemy_y, i  + 1, j  + 1);
+                                                                                        turn--;
+                                                                                        *p[enemy_x+k][enemy_y] = temp;
+                                                                                        return 0;
+                                                                                }
+                                                                                else {
+                                                                                        statuemove(p, enemy_x + k, enemy_y, i + 1, j + 1);
+                                                                                        turn--;
+                                                                                        *p[enemy_x+k][enemy_y] = temp;
+                                                                                        return 1;
+                                                                                }
+                                                                        }
+                                                                }
+
+                                                        }
+
+                                                        else if(King_x < enemy_x && King_y == enemy_y) {
+                                                                for(int k = 0; k<abs(King_x - enemy_x); k++) {
+                                                                        if(p[enemy_x-k][enemy_y]->isMove == 1) {
+                                                                                temp = *p[enemy_x-k][enemy_y];
+                                                                                statuemove(p, i, j, enemy_x - k + 1, enemy_y + 1);
+                                                                                turn--;
+                                                                                if (check(p) == 0) {
+                                                                                        statuemove(p, enemy_x- k, enemy_y, i  + 1, j  + 1);
+                                                                                        turn--;
+                                                                                        *p[enemy_x-k][enemy_y] = temp;
+                                                                                        return 0;
+                                                                                }
+                                                                                else {
+                                                                                        statuemove(p, enemy_x- k, enemy_y, i + 1, j + 1);
+                                                                                        turn--;
+                                                                                        *p[enemy_x-k][enemy_y] = temp;
+                                                                                        return 1;
+                                                                                }
+                                                                        }
+                                                                }
+
+                                                        }
+                                                        else if(King_x == enemy_x && King_y > enemy_y) {
+                                                                for(int k = 0; k<abs(King_x - enemy_x); k++) {
+                                                                        if(p[enemy_x][enemy_y+k]->isMove == 1) {
+                                                                                temp = *p[enemy_x][enemy_y+k];
+                                                                                statuemove(p, i, j, enemy_x  + 1, enemy_y+ k + 1);
+                                                                                turn--;
+                                                                                if (check(p) == 0) {
+                                                                                        statuemove(p, enemy_x, enemy_y+ k, i  + 1, j  + 1);
+                                                                                        turn--;
+                                                                                        *p[enemy_x][enemy_y+k] = temp;
+                                                                                        return 0;
+                                                                                }
+                                                                                else {
+                                                                                        statuemove(p, enemy_x, enemy_y+ k, i + 1, j + 1);
+                                                                                        turn--;
+                                                                                        *p[enemy_x][enemy_y+k] = temp;
+                                                                                        return 1;
+                                                                                }
+                                                                        }
+                                                                }
+
+                                                        }
+                                                        else if(King_x == enemy_x && King_y < enemy_y) {
+                                                                for(int k = 0; k<abs(King_x - enemy_x); k++) {
+                                                                        if(p[enemy_x][enemy_y-k]->isMove == 1) {
+                                                                                temp = *p[enemy_x][enemy_y-k];
+                                                                                statuemove(p, i, j, enemy_x + 1, enemy_y -k+ 1);
+                                                                                turn--;
+                                                                                if (check(p) == 0) {
+                                                                                        statuemove(p, enemy_x, enemy_y-k, i  + 1, j  + 1);
+                                                                                        turn--;
+                                                                                        *p[enemy_x][enemy_y-k] = temp;
+                                                                                        return 0;
+                                                                                }
+                                                                                else {
+                                                                                        statuemove(p, enemy_x, enemy_y-k, i + 1, j + 1);
+                                                                                        turn--;
+                                                                                        *p[enemy_x][enemy_y-k] = temp;
+                                                                                        return 1;
+                                                                                }
+                                                                        }
+                                                                }
+                                                        }
+
+                                                }
+                                        }
+                                }
+        }
 }
 
 void saveGame(Piece* (*p)[8]) {//게임 저장
