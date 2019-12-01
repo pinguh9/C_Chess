@@ -208,7 +208,7 @@ void initialize_Move(Piece* (*p)[8], int x, int y) // 장애물을 확인하고 갈 수 있
                                                 p[i][j]->isMove = 0;
                                         else if (i > blockDL_X&& j < blockDL_Y) // 아래 왼쪽 장애물
                                                 p[i][j]->isMove = 0;
-                                        else if (i > blockDR_X&& j > blockUR_Y) // 아래 오른쪽 장애물
+                                        else if (i > blockDR_X && j > blockDR_Y) // 아래 오른쪽 장애물
                                                 p[i][j]->isMove = 0;
                                         else
                                                 p[i][j]->isMove = 1;
@@ -311,10 +311,10 @@ void print_map(Piece* (*p)[8], int x, int y) {
                                                                 else
                                                                         printf(" -- ");
                                                         }
-                                                        // else if (isEnpassantTurn[1][j] == turn-1 && turn>1 && i == x+1) // 앙파상 가능한 턴이면
-                                                        // {
-                                                        //         printf(" @@ ");
-                                                        // }
+                                                        else if (isEnpassantTurn[1][j] == turn-1 && x == 4 && turn>1 && i == x+1)  // 앙파상 가능한 턴이면
+                                                        {
+                                                                printf(" @@ ");
+                                                        }
 
                                                         else
                                                                 printf(" -- ");
@@ -331,10 +331,10 @@ void print_map(Piece* (*p)[8], int x, int y) {
                                                                 else
                                                                         printf(" -- ");
                                                         }
-                                                        // else if (isEnpassantTurn[0][j] == turn-1 && turn>1 && i == x-1) // 앙파상 가능한 턴이면
-                                                        // {
-                                                        //         printf(" @@ ");
-                                                        // }
+                                                        else if (isEnpassantTurn[0][j] == turn-1 && x == 3 && turn>1 && i == x-1) // 앙파상 가능한 턴이면
+                                                        {
+                                                                printf(" @@ ");
+                                                        }
                                                         else
                                                                 printf(" -- ");
                                                         break;
